@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1010298576822",
+    "project_id": "trust-country",
+    "storage_bucket": "trust-country.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010298576822:android:878981fdfed48d9126ab17",
+        "android_client_info": {
+          "package_name": "com.trustcountry.citasduales"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1010298576822-1srf0uoc1p91mlnhqo20rlkfst0k0obr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5iUrLgbgdGqifVQYx6lhxpEKxe7a_ChI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1010298576822-1srf0uoc1p91mlnhqo20rlkfst0k0obr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
