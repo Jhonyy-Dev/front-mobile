@@ -35,27 +35,25 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   DateTime? _fechaNacimiento;
   late bool _isEditing;
   
-
   String _codigoReferido = "";
   String _numeroReferido = "0";
   bool _isLoading = false;
 
-
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.iniciarEnModoEdicion;
+    _isEditing = false; // Siempre iniciar en modo visualización
     _cargarDatosPerfil();
     _cargarImagenLocal();
   }
 
   Future<void> _cargarDatosPerfil() async {
-  setState(() {
-    _isLoading = true;
-  });
+    setState(() {
+      _isLoading = true;
+    });
 
-  try {
-    final userData = await userServicio.obtenerPerfilUsuario();
+    try {
+      final userData = await userServicio.obtenerPerfilUsuario();
 
     if (userData != null) {
       print(userData);
@@ -120,7 +118,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       } else if (imagenUrl.isNotEmpty) {
         // Si es una ruta relativa del servidor
         setState(() {
-          _imagenExistente = NetworkImage("https://api-inmigracion.laimeweb.tech/storage/usuarios/$imagenUrl");
+          _imagenExistente = NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl");
           print("✅ Imagen del servidor sincronizada en EditarPerfil: $imagenUrl");
         });
       }
@@ -223,15 +221,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         // Establecer la bandera de perfil actualizado
         await prefs.setBool('perfil_actualizado', true);
         
-        print("✅ Imagen de perfil actualizada y sincronizada: file://${_imagen!.path}");
       }
-      
-      print("Enviando datos del perfil al servidor...");
-      print("Nombre: ${_nombreController.text}");
-      print("Email: ${_emailController.text}");
-      print("Teléfono: ${_telefonoController.text}");
-      print("Dirección: ${_direccionController.text}");
-      print("Fecha de nacimiento: ${_fechaNacimiento != null ? DateFormat('yyyy-MM-dd').format(_fechaNacimiento!) : ''}");
       
       final resultado = await userServicio.actualizarPerfil(
         nombre: _nombreController.text,
@@ -241,23 +231,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         fecha_nacimiento: _fechaNacimiento != null ? DateFormat('yyyy-MM-dd').format(_fechaNacimiento!) : '',
         imagen: _imagen,
       );
-
+      
       if (resultado != null) {
-        print("Perfil actualizado exitosamente");
-        print("Respuesta del servidor: $resultado");
         
         // Verificar si la imagen se actualizó en la respuesta
         if (resultado['usuario'] != null) {
-          if (resultado['usuario']['imagen_url'] != null) {
-            print("Imagen URL actualizada: ${resultado['usuario']['imagen_url']}");
-          } else {
-            print("ADVERTENCIA: imagen_url sigue siendo null después de la actualización");
+          if (resultado['usuario']['imagen_url'] == null && _imagen != null) {
             // Si la imagen_url es null pero hemos subido una imagen, guardar la ruta local
-            if (_imagen != null) {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('imagen_local_path', _imagen!.path);
-              print("Ruta de imagen local guardada: ${_imagen!.path}");
-            }
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('imagen_local_path', _imagen!.path);
           }
         }
         
@@ -276,20 +258,12 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ),
         );
         
-        // Pequeña pausa antes de navegar
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Cambiar a modo visualización después de guardar
+        setState(() {
+          _isEditing = false;
+        });
         
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProfileScreen(),
-            ),
-          );
-        }
-      } 
-      else {
-        print("Error: No se pudo actualizar el perfil");
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al actualizar el perfil'),
@@ -302,10 +276,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         );
       }
     } catch (e) {
-      print("Error al guardar cambios: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $e'),
+          content: Text('Error al actualizar el perfil'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -531,42 +504,49 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Botón de guardar centrado
-                    if (_isEditing)
-                      Container(
-                        width: 200,
-                        height: 50,
-                        decoration: BoxDecoration(
+                    // Botón de editar/guardar centrado
+                    Container(
+                      width: 200,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: const Color(0xFF4A80F0),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
                           borderRadius: BorderRadius.circular(25),
-                          color: const Color(0xFF4A80F0),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(25),
-                            onTap: _guardarCambios,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.save_outlined,
+                          onTap: () {
+                            if (_isEditing) {
+                              _guardarCambios();
+                            } else {
+                              setState(() {
+                                _isEditing = true;
+                              });
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _isEditing ? Icons.save_outlined : Icons.edit_outlined,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isEditing ? 'Guardar' : 'Editar',
+                                style: GoogleFonts.poppins(
                                   color: Colors.white,
-                                  size: 24,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Guardar',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -604,7 +584,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       const SizedBox(height: 20),
                       
                       // Nombre completo
-                      const SizedBox(height: 8),
+                      if (!_isEditing) ...[
+                        Text(
+                          'Nombre completo',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       _isEditing
                           ? TextField(
                               controller: _nombreController,
@@ -621,10 +611,19 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                               ),
                             ),
                       const SizedBox(height: 16),
-                      const SizedBox(height: 16),
                       
                       // Teléfono
-                      const SizedBox(height: 8),
+                      if (!_isEditing) ...[
+                        Text(
+                          'Teléfono',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       _isEditing
                           ? TextField(
                               controller: _telefonoController,
@@ -642,18 +641,35 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                               ),
                             ),
                       const SizedBox(height: 16),
-                      const SizedBox(height: 16),
                       
-                     const SizedBox(height: 8),
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(color: textColor),
-                        decoration: inputDecoration.copyWith(
-                          labelText: 'Correo electrónico',
+                      // Correo electrónico
+                      if (!_isEditing) ...[
+                        Text(
+                          'Correo electrónico',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: primaryColor,
+                          ),
                         ),
-                        enabled: false,  // Esto hace que no se pueda editar
-                      ),
+                        const SizedBox(height: 8),
+                      ],
+                      _isEditing
+                          ? TextField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              style: TextStyle(color: textColor),
+                              decoration: inputDecoration.copyWith(
+                                labelText: 'Correo electrónico',
+                              ),
+                            )
+                          : Text(
+                              _emailController.text,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                color: textColor,
+                              ),
+                            ),
                       const SizedBox(height: 16),
                       const SizedBox(height: 16),
 
@@ -664,7 +680,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: subtitleColor,
+                          color: primaryColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -708,10 +724,19 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                               ),
                             ),
                       const SizedBox(height: 16),
-                      const SizedBox(height: 16),
                       
                       // Dirección
-                      const SizedBox(height: 8),
+                      if (!_isEditing) ...[
+                        Text(
+                          'Dirección',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       _isEditing
                           ? TextField(
                               controller: _direccionController,

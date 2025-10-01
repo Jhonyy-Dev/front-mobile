@@ -120,7 +120,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         } 
         // Si es una ruta relativa, construir la URL completa
         else if (!imagenUrlBD.startsWith('file://')) {
-          final fullUrl = "https://api-inmigracion.laimeweb.tech/storage/usuarios/$imagenUrlBD";
+          final fullUrl = "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrlBD";
           setState(() {
             _imagenExistente = NetworkImage(fullUrl);
             print("✅ Usando imagen de URL completa: $fullUrl");

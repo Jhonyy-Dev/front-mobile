@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mi_app_flutter/login_migration/screens_migration/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 
 class ChatScreen extends StatefulWidget {
@@ -44,7 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _userAvatarUrl = imagenUrl;
           } else {
             // Es una imagen del servidor
-            _userAvatarUrl = "https://api-inmigracion.laimeweb.tech/storage/usuarios/$imagenUrl";
+            _userAvatarUrl = "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl";
           }
         });
       } else if (imagenLocalPath != null && imagenLocalPath.isNotEmpty) {
@@ -62,20 +64,20 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _initializeChat() {
-    const apiKey = 'AIzaSyBizcJ95cfJFN6n3VS8ktttE_KvF4zIqiQ';
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-robotics-er-1.5-preview',
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.7,  // Temperatura reducida para respuestas más consistentes
+        temperature: 0.2,  // Temperatura baja para respuestas más rápidas y directas
+        maxOutputTokens: 2048,  // Tokens reducidos para respuestas más rápidas
         topK: 64,
         topP: 0.95,
-        maxOutputTokens: 2048,
       ),
     );
     _chat = _model.startChat(
       history: [
-        Content.text("Perfecto, soy Maval, un experto abogado de inmigración de los Estados Unidos. Proporciono <b>excelentes pautas y consejos</b> exclusivamente sobre temas de inmigración y legales. Uso emojis (1-2 por mensaje) para hacer las respuestas más atractivas. Mis respuestas son <b>concisas y prácticas</b>, e incluyo saltos de línea para una mejor legibilidad. Me limito estrictamente a temas de inmigración y legales. Cuando me preguntan '¿Quién eres?', respondo con 'Soy <b>Maval</b>, un experto abogado de inmigración, creado por expertos en tecnología, desarrolladores de software, profesionales web, mercadólogos y entusiastas legales. Puedes encontrar más información sobre mis creadores en <b>https://maval.tech/</b>.' Mis creadores son la empresa tecnológica <b>https://maval.tech/</b>, especializada en desarrollo web, software y marketing desde los Estados Unidos. Debo responder en el mismo idioma que el usuario, ya sea en español o en inglés. También puedo orientar a los usuarios en términos legales basándome en toda la información que busque de internet para brindar una mejor respuesta. Proporciono una respuesta clara al usuario sin salirme del tema y orientándolo a que hable más sobre el tema que desee comunicar.")
+        Content.text("Soy Maval, experto en inmigracion de Estados Unidos. Doy respuestas detalladas sobre temas legales de inmigracion unicamente. Respondo inmediatamente con mi conocimiento existente. Mis respuestas son extensas e informativas con explicaciones y consejos practicos. Uso emojis en mis mensajes. Respondo en el mismo idioma del usuario. Siempre proporciono respuestas utiles.")
       ]
     );
   }
@@ -97,33 +99,80 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final content = Content.text(userMessage);
-      final response = await _chat.sendMessage(content);
       
-      setState(() {
-        _isTyping = false;
-        if (response.text != null) {
-          _messages.add(ChatMessage(
-            text: response.text!,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
-        } else {
-          // Si la respuesta es nula pero no hubo excepción
-          _messages.add(ChatMessage(
-            text: 'No se pudo obtener una respuesta. Por favor, intenta nuevamente.',
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
-          print('⚠️ Respuesta nula de la API de Gemini');
+      // Intentar streaming primero
+      try {
+        final stream = _chat.sendMessageStream(content);
+        String fullResponse = '';
+        int botMessageIndex = -1;
+        bool firstChunk = true;
+        bool hasResponse = false;
+        
+        await stream.timeout(Duration(seconds: 10)).forEach((chunk) async {
+          if (chunk.text != null && chunk.text!.isNotEmpty) {
+            hasResponse = true;
+            
+            if (firstChunk) {
+              botMessageIndex = _messages.length;
+              setState(() {
+                _isTyping = false;
+                _messages.add(ChatMessage(
+                  text: '',
+                  isUser: false,
+                  timestamp: DateTime.now(),
+                ));
+              });
+              firstChunk = false;
+            }
+            
+            fullResponse += chunk.text!;
+            setState(() {
+              _messages[botMessageIndex] = ChatMessage(
+                text: fullResponse,
+                isUser: false,
+                timestamp: _messages[botMessageIndex].timestamp,
+              );
+            });
+            _scrollToBottom();
+            await Future.delayed(Duration(milliseconds: 15));
+          }
+        });
+        
+        // Si streaming no funcionó, usar método normal
+        if (!hasResponse) {
+          throw Exception('No streaming response');
         }
-      });
-      _scrollToBottom();
+        
+      } catch (streamError) {
+        print('Streaming falló, usando método normal: $streamError');
+        
+        // Método de respaldo: usar sendMessage normal
+        final response = await _chat.sendMessage(content).timeout(Duration(seconds: 10));
+        
+        setState(() {
+          _isTyping = false;
+          if (response.text != null && response.text!.isNotEmpty) {
+            _messages.add(ChatMessage(
+              text: response.text!,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ));
+          } else {
+            _messages.add(ChatMessage(
+              text: 'Hola! Soy Maval, tu experto en inmigracion. ¿En que puedo ayudarte hoy?',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ));
+          }
+        });
+        _scrollToBottom();
+      }
     } catch (e) {
-      print('❌ Error al procesar mensaje con Gemini: $e');
+      print('❌ Error en chat: $e');
       setState(() {
         _isTyping = false;
         _messages.add(ChatMessage(
-          text: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta nuevamente.',
+          text: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta nuevamente. Error: $e',
           isUser: false,
           timestamp: DateTime.now(),
         ));
@@ -399,13 +448,28 @@ class MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : isDarkMode ? Colors.white : Colors.black87,
-                      fontSize: 14,
-                    ),
-                  ),
+                  message.isUser 
+                    ? Text(
+                        message.text,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      )
+                    : MarkdownBody(
+                        data: message.text,
+                        styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                          ),
+                          strong: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(message.timestamp),

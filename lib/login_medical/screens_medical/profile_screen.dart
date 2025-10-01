@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/settings_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/home.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/chats_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/tarjeta_digital_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/login_medical/login_screen.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
@@ -180,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return NetworkImage(url);
     } else {
       // Si es una ruta relativa del servidor
-      return NetworkImage("https://api-inmigracion.laimeweb.tech/storage/usuarios/$url");
+      return NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$url");
     }
   }
 
@@ -1212,13 +1213,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 32),
                 _buildProfileItem(
-                  title: 'Editar Perfil',
+                  title: 'Información Personal',
                   icon: Icons.person_outline,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const EditarPerfilScreen(),
+                      ),
+                    );
+                  },
+                ),
+
+                _buildProfileItem(
+                  title: 'Tarjeta Digital',
+                  icon: Icons.credit_card_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TarjetaDigitalScreen(),
                       ),
                     );
                   },

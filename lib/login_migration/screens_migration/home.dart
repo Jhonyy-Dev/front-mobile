@@ -5,21 +5,25 @@ import 'package:mi_app_flutter/login_migration/screens_migration/profile_screen.
 import 'package:mi_app_flutter/login_migration/screens_migration/chats_screen.dart';
 import '../models/news_article.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
 
 import 'package:mi_app_flutter/servicios/migracion_servicio.dart';
 import 'package:mi_app_flutter/servicios/categoria_servicio.dart';
+import '../../servicios/notificaciones_servicio.dart';
+import '../../servicios/firebase_notificaciones_servicio.dart';
+
+import 'package:mi_app_flutter/login_medical/widgets/cumpleanos_banner.dart';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:mi_app_flutter/servicios/documentos_usuario.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
+import 'package:mi_app_flutter/servicios/documentos_usuario.dart';
 import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:open_file/open_file.dart';
+// import 'package:open_file/open_file.dart'; // Reemplazado por url_launcher
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 // Importaciones necesarias ya incluidas arriba
 
 class HomePage extends StatefulWidget {
@@ -45,6 +49,10 @@ class _HomePageState extends State<HomePage> {
   // Variables para noticias
   List<NewsArticle> _newsArticles = [];
   int _displayedNewsCount = 2;
+  
+  // Variables para cumpleaños
+  bool esCumpleanos = false;
+  bool mostrarBannerCumpleanos = true;
 
   late Future<List<Map<String, dynamic>>> _futureDocumentos;
 
@@ -157,6 +165,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Método para verificar si es cumpleaños
+  Future<void> _verificarCumpleanos() async {
+    try {
+      final esCumpleanosHoy = await NotificacionesServicio.esCumpleanosHoy();
+      if (mounted) {
+        setState(() {
+          esCumpleanos = esCumpleanosHoy;
+        });
+      }
+      
+      // Verificar y enviar notificación si es necesario
+      if (esCumpleanosHoy) {
+        await NotificacionesServicio.verificarCumpleanos();
+      }
+    } catch (e) {
+      print('Error al verificar cumpleaños: $e');
+    }
+  }
+
   Future<void> _verificarImagenLocal() async {
     final prefs = await SharedPreferences.getInstance();
     
@@ -196,6 +223,13 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     cargarUsuarioDatos();
+    _verificarCumpleanos(); // Verificar si es cumpleaños
+    
+    // Registrar token FCM de forma segura (no rompe si Firebase falla)
+    FirebaseNotificacionesServicio.registrarTokenSeguro();
+    
+    // Llamadas de prueba removidas para producción
+    
     _calculateRemainingDays();
      _cargarDocumentos();
     _timer = Timer.periodic(Duration(days: 1), (timer) {
@@ -772,6 +806,25 @@ class _HomePageState extends State<HomePage> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          print('🔴 PROBANDO NOTIFICACIONES EN SEGUNDO PLANO - DELAY 1 MINUTO');
+          
+          // Obtener el primer nombre del usuario actual
+          final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
+          
+          // Usar el nuevo método con delay de 60 segundos (1 minuto)
+          await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
+            titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
+            mensaje: '¡Que pases un día súper hermoso con tus seres amados! ❤️✨',
+            segundosDelay: 60, // 1 minuto de delay
+          );
+        },
+        child: Icon(Icons.notifications, color: Colors.white),
+        backgroundColor: Colors.red, // Rojo para que sea muy visible
+        tooltip: 'Probar notificación en segundo plano (1 min delay)',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
@@ -862,6 +915,21 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     SizedBox(height: MediaQuery.of(context).size.width < 360 ? 20 : 32),
+
+                    // Banner de Cumpleaños (si es su cumpleaños)
+                    if (esCumpleanos && mostrarBannerCumpleanos)
+                      CumpleanosBanner(
+                        darkModeEnabled: isDarkMode,
+                        userName: userName.isNotEmpty ? userName : 'Usuario',
+                        onDismiss: () {
+                          setState(() {
+                            mostrarBannerCumpleanos = false;
+                          });
+                        },
+                      ),
+                    
+                    if (esCumpleanos && mostrarBannerCumpleanos)
+                      const SizedBox(height: 16),
 
                     // Countdown Timer Container
                     SizedBox(
@@ -2697,12 +2765,16 @@ void descargarDocumento(String documento) async {
         // Mostrar mensaje de éxito
         _showSuccessMessage('$tipoArchivo descargado correctamente');
         
-        // Intentar abrir el archivo
+        // Intentar abrir el archivo usando url_launcher
         try {
-          final result = await OpenFile.open(downloadedPath);
-          if (result.type != ResultType.done) {
-            print("No se pudo abrir el archivo: ${result.message}");
-            
+          final uri = Uri.file(downloadedPath);
+          final canLaunch = await canLaunchUrl(uri);
+          
+          if (canLaunch) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            print("Archivo abierto exitosamente: $downloadedPath");
+          } else {
+            print("No se pudo abrir el archivo: $downloadedPath");
             // Mostrar diálogo informativo para ciertos tipos de archivos
             if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].contains(fileExtension)) {
               _showFileInfoDialog(tipoArchivo, downloadedPath);

@@ -57,7 +57,7 @@ class PerfilServicio {
   required String fecha_nacimiento,
   File? imagen,
 }) async {
-  final url = Uri.parse("$baseUrl/actualizarPerfil");
+  final url = Uri.parse("$baseUrl/actualizarPerfil/"); // Agregar barra final
 
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('token');
@@ -96,31 +96,20 @@ class PerfilServicio {
       // También agregar un campo adicional para indicar que hay una imagen
       request.fields['tiene_imagen'] = 'true';
       
-      print("Imagen agregada a la solicitud con el campo: ${imageFile.field}");
-      print("Nombre del archivo: ${imageFile.filename}");
     }
 
-    print("Enviando solicitud a: $url");
-    print("Headers: ${request.headers}");
-    print("Fields: ${request.fields}");
-    
     // Enviar la solicitud
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-    
-    print("Código de respuesta: ${response.statusCode}");
-    print("Cuerpo de respuesta: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      print("Datos recibidos del servidor: $data");
 
       // Guardar usuario actualizado en SharedPreferences
       if (data['usuario'] != null) {
         // Si la imagen_url es null pero hemos subido una imagen, 
         // vamos a añadir manualmente una URL temporal
         if (data['usuario']['imagen_url'] == null && imagen != null) {
-          print("Añadiendo URL de imagen temporal ya que el backend no la devolvió");
           data['usuario']['imagen_url_local'] = imagen.path;
           
           // Guardar la ruta de la imagen local para futuras referencias
@@ -128,7 +117,6 @@ class PerfilServicio {
         }
         
         await prefs.setString('usuario', jsonEncode(data['usuario']));
-        print("Usuario guardado en SharedPreferences: ${data['usuario']}");
       }
       
       // Notificar a la aplicación que los datos del usuario han cambiado
@@ -136,11 +124,9 @@ class PerfilServicio {
       
       return data;
     } else {
-      print("Error: ${response.statusCode} ${response.body}");
       return null;
     }
   } catch (e) {
-    print("Error al actualizar el perfil: $e");
     return null;
   }
 }

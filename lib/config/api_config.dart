@@ -1,9 +1,9 @@
 class ApiConfig {
   // URL base de la API de Laravel
-  static const String baseUrl = "https://api-inmigracion.laimeweb.tech/api";
+  static const String baseUrl = "https://api-inmigracion.maval.tech/api";
   
   // URL base para archivos de storage
-  static const String storageUrl = "https://api-inmigracion.laimeweb.tech/storage";
+  static const String storageUrl = "https://api-inmigracion.maval.tech/storage";
   
   // Endpoints específicos
   static const String loginEndpoint = "/login";

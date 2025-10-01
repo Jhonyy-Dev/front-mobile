@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/profile_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/settings_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/chats_screen.dart';
-import 'package:mi_app_flutter/login_medical/screens_medical/categories_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/appointment_psychology_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/categories_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/historial_medico_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/documentos_medicos_screen.dart';
+import 'package:mi_app_flutter/login_medical/widgets/historial_medico_card.dart';
+import 'package:mi_app_flutter/login_medical/widgets/documentos_medicos_card.dart';
+import 'package:mi_app_flutter/login_medical/widgets/cumpleanos_banner.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +18,8 @@ import 'package:mi_app_flutter/servicios/categoria_servicio.dart';
 
 import 'package:mi_app_flutter/servicios/citas_servicio.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
+import 'package:mi_app_flutter/servicios/notificaciones_servicio.dart';
+import 'package:mi_app_flutter/servicios/firebase_notificaciones_servicio.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -35,6 +42,8 @@ class _HomePageState extends State<HomePage> {
   String imagenUrl = '';
   bool isLoading = true;
   ImageProvider? _imagenLocal;
+  bool esCumpleanos = false;
+  bool mostrarBannerCumpleanos = true;
 
   void cargarUsuarioDatos() async {
     // AuthService authService = AuthService();
@@ -73,6 +82,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     cargarUsuarioDatos();
     _cargarImagenLocal();
+    _verificarCumpleanos(); // Verificar si es cumpleaños
 
     _futureCategorias = CategoriaServicio().obtenerCategorias();
     
@@ -91,6 +101,9 @@ class _HomePageState extends State<HomePage> {
     // Verificar si hay una nueva cita creada
     _verificarNuevaCita();
     
+    // Registrar token FCM de forma segura (no rompe si Firebase falla)
+    FirebaseNotificacionesServicio.registrarTokenSeguro();
+    
     print('Métodos de inicialización llamados');
   }
 
@@ -100,6 +113,25 @@ class _HomePageState extends State<HomePage> {
       futureCitas = citasServicio.obtenerCitas();
     });
     print("Citas actualizadas cargadas");
+  }
+
+  // Método para verificar si es cumpleaños
+  Future<void> _verificarCumpleanos() async {
+    try {
+      final esCumpleanosHoy = await NotificacionesServicio.esCumpleanosHoy();
+      if (mounted) {
+        setState(() {
+          esCumpleanos = esCumpleanosHoy;
+        });
+      }
+      
+      // Verificar y enviar notificación si es necesario
+      if (esCumpleanosHoy) {
+        await NotificacionesServicio.verificarCumpleanos();
+      }
+    } catch (e) {
+      print('Error al verificar cumpleaños: $e');
+    }
   }
 
   // Método para verificar si hay una nueva cita creada
@@ -859,7 +891,7 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               SizedBox(
                                 child: Text(
-                                  userName.isNotEmpty ? 'Hola $userName 👋' : 'Cargando...',
+                                  userName.isNotEmpty ? 'Hola ${userName.split(' ').first} 👋' : 'Cargando...',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -905,7 +937,7 @@ class _HomePageState extends State<HomePage> {
                                     : NetworkImage(
                                         imagenUrl.startsWith('http') 
                                           ? imagenUrl 
-                                          : "https://api-inmigracion.laimeweb.tech/storage/usuarios/$imagenUrl"
+                                          : "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl"
                                       ) as ImageProvider
                                   : _imagenLocal ?? const AssetImage('assets/doctor.webp') as ImageProvider,
                                 fit: BoxFit.cover,
@@ -925,6 +957,21 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 32),
+
+                    // Banner de Cumpleaños (si es su cumpleaños)
+                    if (esCumpleanos && mostrarBannerCumpleanos)
+                      CumpleanosBanner(
+                        darkModeEnabled: darkModeEnabled,
+                        userName: userName.isNotEmpty ? userName : 'Usuario',
+                        onDismiss: () {
+                          setState(() {
+                            mostrarBannerCumpleanos = false;
+                          });
+                        },
+                      ),
+                    
+                    if (esCumpleanos && mostrarBannerCumpleanos)
+                      const SizedBox(height: 16),
 
                     // Slider Banner
                     SizedBox(
@@ -1478,13 +1525,59 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                             ),
+
+                          const SizedBox(height: 16),
+
+                          // Tarjeta de Historial Médico
+                          HistorialMedicoCard(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HistorialMedicoScreen(),
+                                ),
+                              );
+                            },
+                            darkModeEnabled: darkModeEnabled,
+                            width: MediaQuery.of(context).size.width * 0.8,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Tarjeta de Documentos Médicos
+                          DocumentosMedicosCard(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const DocumentosMedicosScreen(),
+                                ),
+                              );
+                            },
+                            darkModeEnabled: darkModeEnabled,
+                            width: MediaQuery.of(context).size.width * 0.8,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Tarjeta de Pólizas y cobertura
+                          PolizasCobertura(
+                            onTap: () {
+                              // TODO: Navegar a la pantalla de pólizas cuando esté lista
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Funcionalidad en desarrollo'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            darkModeEnabled: darkModeEnabled,
+                            width: MediaQuery.of(context).size.width * 0.8,
+                          ),
                         ],
                       );
                     },
                   ),
-
-
-
 
                     const SizedBox(height: 24),
 

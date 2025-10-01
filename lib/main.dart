@@ -1,12 +1,55 @@
 import 'package:flutter/material.dart';
-// import 'package:firebase_core/firebase_core.dart';  // Comentado para iOS
-import 'package:flutter/foundation.dart';
-import 'welcome_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
+import 'servicios/notificaciones_servicio.dart';
+import 'servicios/firebase_notificaciones_servicio.dart';
+import 'servicios/cumpleanos_background_servicio.dart';
+import 'login_medical/servicios/cumpleanos_background_servicio_medical.dart';
+import 'servicios/fcm_backend_servicio.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Cargar variables de entorno
+  await dotenv.load(fileName: ".env");
+  
+  // Inicializar Firebase y notificaciones push (con manejo de errores)
+  try {
+    await FirebaseNotificacionesServicio.inicializar();
+    
+    // Configurar handler para notificaciones en background
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    print('✅ Firebase inicializado correctamente');
+  } catch (e) {
+    print('⚠️ Firebase no se pudo inicializar: $e');
+    print('📱 La app funcionará sin notificaciones push');
+  }
+  
+  // Inicializar notificaciones locales (banner)
+  await NotificacionesServicio.inicializar();
+  await NotificacionesServicio.configurarListeners();
+  await NotificacionesServicio.solicitarPermisos();
+  
+  // Inicializar servicios de cumpleaños en segundo plano para AMBAS versiones
+  try {
+    // Servicio para usuarios de MIGRACIÓN
+    await CumpleanosBackgroundServicio.inicializar();
+    print('🎂 Servicio de cumpleaños MIGRATION activado');
+    
+    // Servicio para usuarios MÉDICOS
+    await CumpleanosBackgroundServicioMedical.inicializar();
+    print('🎂 Servicio de cumpleaños MEDICAL activado');
+    
+    // Registrar token FCM en backend para notificaciones push
+    await FCMBackendServicio.registrarTokenFCM();
+    await FCMBackendServicio.configurarNotificacionesProgramadas();
+    
+  } catch (e) {
+    print('⚠️ Error inicializando servicios de cumpleaños: $e');
+  }
   
   // Firebase initialization commented out for iOS compatibility
   // if (kIsWeb) {
@@ -49,7 +92,7 @@ class MyApp extends StatelessWidget {
               fontFamily: 'Poppins',
               brightness: themeProvider.darkModeEnabled ? Brightness.dark : Brightness.light,
             ),
-            home: const WelcomeScreen(),
+            home: const SplashScreen(),
           );
         }
       ),

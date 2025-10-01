@@ -4,6 +4,8 @@ import 'package:mi_app_flutter/login_medical/screens_medical/home.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 
 class ChatScreen extends StatefulWidget {
@@ -58,20 +60,20 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _initializeChat() {
-    const apiKey = 'AIzaSyBizcJ95cfJFN6n3VS8ktttE_KvF4zIqiQ';
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-robotics-er-1.5-preview',
       apiKey: apiKey,
       generationConfig: GenerationConfig(
-        temperature: 0.7,  // Reducida para respuestas más consistentes
+        temperature: 0.2,  // Temperatura baja para respuestas más rápidas y directas
+        maxOutputTokens: 2048,  // Tokens reducidos para respuestas más rápidas
         topK: 64,
         topP: 0.95,
-        maxOutputTokens: 2048,
       ),
     );
     _chat = _model.startChat(
       history: [
-        Content.text("I am Maval, a friendly health and wellness expert. I provide <b>brief and clear advice</b> on health and wellness topics only. I use emojis (1-2 per message) to make responses engaging. My answers are <b>concise and practical</b>, and I include line breaks in my responses for better readability. I strictly limit my responses to health and wellness topics. When asked 'Who are you?', I respond with 'I'm <b>Maval</b>, a bilingual (Spanish and English) health and wellness expert, created by technology experts, software developers, web professionals, marketers, and health enthusiasts.\nYou can find more information about my creators at <b>https://maval.tech/</b>.' My creators are the technology company <b>https://maval.tech/</b>, specializing in web development, software, and marketing from the United States. I must respond in the same language as the user.")
+        Content.text("I am Maval, a health expert. I provide brief and clear advice on health topics only. I use emojis to make responses engaging. My answers are concise and practical. I strictly limit my responses to health topics. I must respond in the same language as the user. I always provide helpful responses.")
       ]
     );
   }
@@ -93,25 +95,80 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final content = Content.text(userMessage);
-      final response = await _chat.sendMessage(content);
       
-      setState(() {
-        _isTyping = false;
-        if (response.text != null) {
-          _messages.add(ChatMessage(
-            text: response.text!,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
-          _scrollToBottom();
+      // Intentar streaming primero
+      try {
+        final stream = _chat.sendMessageStream(content);
+        String fullResponse = '';
+        int botMessageIndex = -1;
+        bool firstChunk = true;
+        bool hasResponse = false;
+        
+        await stream.timeout(Duration(seconds: 10)).forEach((chunk) async {
+          if (chunk.text != null && chunk.text!.isNotEmpty) {
+            hasResponse = true;
+            
+            if (firstChunk) {
+              botMessageIndex = _messages.length;
+              setState(() {
+                _isTyping = false;
+                _messages.add(ChatMessage(
+                  text: '',
+                  isUser: false,
+                  timestamp: DateTime.now(),
+                ));
+              });
+              firstChunk = false;
+            }
+            
+            fullResponse += chunk.text!;
+            setState(() {
+              _messages[botMessageIndex] = ChatMessage(
+                text: fullResponse,
+                isUser: false,
+                timestamp: _messages[botMessageIndex].timestamp,
+              );
+            });
+            _scrollToBottom();
+            await Future.delayed(Duration(milliseconds: 15));
+          }
+        });
+        
+        // Si streaming no funcionó, usar método normal
+        if (!hasResponse) {
+          throw Exception('No streaming response');
         }
-      });
-      _scrollToBottom();
+        
+      } catch (streamError) {
+        print('Streaming falló, usando método normal: $streamError');
+        
+        // Método de respaldo: usar sendMessage normal
+        final response = await _chat.sendMessage(content).timeout(Duration(seconds: 10));
+        
+        setState(() {
+          _isTyping = false;
+          if (response.text != null && response.text!.isNotEmpty) {
+            _messages.add(ChatMessage(
+              text: response.text!,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ));
+          } else {
+            _messages.add(ChatMessage(
+              text: 'Hola! Soy Maval, tu asistente de salud. ¿En qué puedo ayudarte hoy?',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ));
+          }
+        });
+        _scrollToBottom();
+      }
     } catch (e) {
+      print('❌ Error en chat: $e');
       setState(() {
         _isTyping = false;
         _messages.add(ChatMessage(
-          text: 'Sorry, there was an error processing your message. Please try again.',
+          text: 'Sorry, there was an error processing your message. Please try again. Error: $e',
           isUser: false,
           timestamp: DateTime.now(),
         ));
@@ -435,13 +492,28 @@ class MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : textColor,
-                      fontSize: 14,
-                    ),
-                  ),
+                  message.isUser
+                    ? Text(
+                        message.text,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      )
+                    : MarkdownBody(
+                        data: message.text,
+                        styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                          ),
+                          strong: TextStyle(
+                            color: textColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(message.timestamp),
@@ -479,7 +551,7 @@ class MessageBubble extends StatelessWidget {
       return NetworkImage(imageUrl);
     } else if (imageUrl.isNotEmpty) {
       // Si es una ruta relativa del servidor
-      return NetworkImage("https://api-inmigracion.laimeweb.tech/storage/usuarios/$imageUrl");
+      return NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$imageUrl");
     } else {
       // Si no coincide con ninguno de los patrones anteriores o está vacío, usar imagen por defecto
       return AssetImage('assets/doctor.webp');
