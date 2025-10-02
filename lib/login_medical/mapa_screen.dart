@@ -262,20 +262,35 @@ class _OpenStreetMapPageState extends State<OpenStreetMapPage> {
       // Si el widget ya no está montado, detener la ejecución
       if (!mounted || _isCancelled) return;
 
-      // En paralelo, obtener la posición actual más precisa
-      Position currentPosition = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 5) // Limitar el tiempo de espera
-          );
+      // En paralelo, obtener la posición actual más precisa CON MANEJO DE ERRORES
+      try {
+        Position currentPosition = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high, // PRECISIÓN ALTA PARA UBICACIÓN EXACTA
+            timeLimit: Duration(seconds: 15) // Timeout aumentado para dar tiempo al GPS
+            );
 
-      // Verificar nuevamente si el widget está montado
-      if (!mounted || _isCancelled) return;
+        // Verificar nuevamente si el widget está montado
+        if (!mounted || _isCancelled) return;
 
-      // Actualizar con la posición más precisa
-      setState(() {
-        userLocation =
-            LatLng(currentPosition.latitude, currentPosition.longitude);
-      });
+        // Actualizar con la posición más precisa
+        setState(() {
+          userLocation =
+              LatLng(currentPosition.latitude, currentPosition.longitude);
+        });
+        
+        print('✅ Ubicación precisa obtenida: ${currentPosition.latitude}, ${currentPosition.longitude}');
+        
+        // Actualizar ciudad, hospitales y urgent cares con la ubicación precisa
+        if (mounted && !_isCancelled) {
+          await getCityName(currentPosition.latitude, currentPosition.longitude);
+          await buscarHospitalesCercanos();
+          await buscarUrgentCaresCercanos();
+        }
+      } catch (e) {
+        print('⚠️ Error obteniendo ubicación precisa: $e');
+        print('📍 Usando ubicación aproximada existente');
+        // No hacer nada - usar la ubicación aproximada que ya tenemos
+      }
 
       // Si el mapa ya está inicializado, moverlo a la nueva posición
       if (_isMapReady) {
@@ -285,14 +300,6 @@ class _OpenStreetMapPageState extends State<OpenStreetMapPage> {
           print('Error al mover el mapa: $e');
         }
       }
-
-      // Verificar nuevamente si el widget está montado
-      if (!mounted || _isCancelled) return;
-
-      // Actualizar ciudad, hospitales y urgent cares con la ubicación precisa
-      await getCityName(currentPosition.latitude, currentPosition.longitude);
-      await buscarHospitalesCercanos();
-      await buscarUrgentCaresCercanos();
     } catch (e) {
       print('Error al obtener la ubicación: $e');
 

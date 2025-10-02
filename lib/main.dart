@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
-import 'servicios/notificaciones_servicio.dart';
-import 'servicios/firebase_notificaciones_servicio.dart';
 import 'servicios/cumpleanos_background_servicio.dart';
 import 'login_medical/servicios/cumpleanos_background_servicio_medical.dart';
 import 'servicios/fcm_backend_servicio.dart';
+import 'servicios/firebase_notificaciones_servicio.dart';
+import 'servicios/notificaciones_servicio.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

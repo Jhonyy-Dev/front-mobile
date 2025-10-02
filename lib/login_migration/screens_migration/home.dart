@@ -4,16 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:mi_app_flutter/login_migration/screens_migration/profile_screen.dart';
 import 'package:mi_app_flutter/login_migration/screens_migration/chats_screen.dart';
 import '../models/news_article.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
 
 import 'package:mi_app_flutter/servicios/migracion_servicio.dart';
 import 'package:mi_app_flutter/servicios/categoria_servicio.dart';
-import '../../servicios/notificaciones_servicio.dart';
-import '../../servicios/firebase_notificaciones_servicio.dart';
+import '../../../servicios/notificaciones_servicio.dart';
+import '../../../servicios/firebase_notificaciones_servicio.dart';
+import '../../../servicios/cumpleanos_background_servicio.dart';
+import '../../../servicios/session_manager.dart';
+import 'package:http/http.dart' as http;
 
-import 'package:mi_app_flutter/login_medical/widgets/cumpleanos_banner.dart';
+// import '../../widgets/cumpleanos_banner.dart'; // Comentado temporalmente
 
 import 'package:image_picker/image_picker.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
@@ -54,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   bool esCumpleanos = false;
   bool mostrarBannerCumpleanos = true;
 
-  late Future<List<Map<String, dynamic>>> _futureDocumentos;
+  late Future<List<Map<String, dynamic>>> _futureDocumentos = Future.value([]);
 
  Future<void> _cargarDocumentos() async {
   try {
@@ -222,12 +224,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    
     cargarUsuarioDatos();
     _verificarCumpleanos(); // Verificar si es cumpleaños
-    
-    // Registrar token FCM de forma segura (no rompe si Firebase falla)
-    FirebaseNotificacionesServicio.registrarTokenSeguro();
-    
     // Llamadas de prueba removidas para producción
     
     _calculateRemainingDays();
@@ -792,6 +791,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // NO guardar automáticamente - solo cuando el usuario elija manualmente
+    
     final themeProvider = Provider.of<ThemeProvider>(context);
     final bool isDarkMode = themeProvider.darkModeEnabled;
     
@@ -914,18 +915,100 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.width < 360 ? 20 : 32),
-
-                    // Banner de Cumpleaños (si es su cumpleaños)
+                    const SizedBox(height: 24),
+                    
+                    // Banner de Cumpleaños (DISEÑO IDÉNTICO AL DE MEDICAL)
                     if (esCumpleanos && mostrarBannerCumpleanos)
-                      CumpleanosBanner(
-                        darkModeEnabled: isDarkMode,
-                        userName: userName.isNotEmpty ? userName : 'Usuario',
-                        onDismiss: () {
-                          setState(() {
-                            mostrarBannerCumpleanos = false;
-                          });
-                        },
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF667eea), // Azul elegante
+                              Color(0xFF764ba2), // Púrpura profundo
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF667eea).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            // Icono de cumpleaños
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                '🎂',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Texto principal
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '¡Feliz Cumpleaños ${userName.isNotEmpty ? userName.split(' ').first : 'Usuario'}! 🎉',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(1, 1),
+                                          blurRadius: 2,
+                                          color: Colors.black26,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '¡Que pases un día súper hermoso con tu familia! 🎈✨',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(1, 1),
+                                          blurRadius: 2,
+                                          color: Colors.black26,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Botón de cerrar
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  mostrarBannerCumpleanos = false;
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     
                     if (esCumpleanos && mostrarBannerCumpleanos)

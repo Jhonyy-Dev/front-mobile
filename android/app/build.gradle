@@ -39,8 +39,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.trustcountry.citasduales"
-    compileSdkVersion 35 // Actualizado a Android 15 para compatibilidad con plugins
-    ndkVersion "25.1.8937393"
+    compileSdk 36 // Actualizado a Android 36 para compatibilidad con plugins
+    ndkVersion "26.1.10909125"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -76,7 +76,7 @@ android {
 
     defaultConfig {
         applicationId "com.trustcountry.citasduales"
-        minSdkVersion 23 // Requerido para awesome_notifications 0.10.0
+        minSdkVersion flutter.minSdkVersion // Requerido para awesome_notifications 0.10.0
         targetSdkVersion 35 // Actualizado a Android 15 para compatibilidad con plugins
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

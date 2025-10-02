@@ -15,11 +15,12 @@ import 'package:mi_app_flutter/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mi_app_flutter/servicios/categoria_servicio.dart';
+import 'package:mi_app_flutter/servicios/firebase_notificaciones_servicio.dart';
 
 import 'package:mi_app_flutter/servicios/citas_servicio.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
+import '../../../servicios/session_manager.dart';
 import 'package:mi_app_flutter/servicios/notificaciones_servicio.dart';
-import 'package:mi_app_flutter/servicios/firebase_notificaciones_servicio.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -80,6 +81,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    
     cargarUsuarioDatos();
     _cargarImagenLocal();
     _verificarCumpleanos(); // Verificar si es cumpleaños
@@ -860,6 +862,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // NO guardar automáticamente - solo cuando el usuario elija manualmente
+    
     // Obtener el ThemeProvider para acceder al estado del modo oscuro
     final themeProvider = Provider.of<ThemeProvider>(context);
     final bool darkModeEnabled = themeProvider.darkModeEnabled;
@@ -870,6 +874,25 @@ class _HomePageState extends State<HomePage> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          print('🔴 PROBANDO NOTIFICACIONES MEDICAL EN SEGUNDO PLANO - DELAY 1 MINUTO');
+          
+          // Obtener el primer nombre del usuario actual
+          final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
+          
+          // Usar el nuevo método con delay de 60 segundos (1 minuto)
+          await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
+            titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
+            mensaje: '¡Que pases un día súper hermoso con tus seres queridos! ❤️✨',
+            segundosDelay: 60, // 1 minuto de delay
+          );
+        },
+        child: Icon(Icons.notifications, color: Colors.white),
+        backgroundColor: Colors.blue, // Azul para diferenciarlo de Migration (rojo)
+        tooltip: 'Probar notificación MEDICAL en segundo plano (1 min delay)',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,

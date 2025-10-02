@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../baseUrl.dart';
+import 'notificaciones_servicio.dart';
 
 class FirebaseNotificacionesServicio {
   static final FirebaseNotificacionesServicio _instance = FirebaseNotificacionesServicio._internal();
@@ -130,7 +131,7 @@ class FirebaseNotificacionesServicio {
           'Accept': 'application/json',
         },
         body: json.encode({
-          'token': _token,
+          'fcm_token': _token,
           'user_id': userId,
         }),
       ).timeout(Duration(seconds: 10)); // Timeout de 10 segundos
@@ -407,4 +408,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Título: ${message.notification?.title}');
   print('Mensaje: ${message.notification?.body}');
   print('Data: ${message.data}');
+  
+  // CRÍTICO: Android automáticamente muestra la notificación cuando la app está cerrada
+  // Si el mensaje tiene notification payload, Android la mostrará automáticamente
+  print('✅ Notificación procesada en background - Android la mostrará automáticamente');
 }

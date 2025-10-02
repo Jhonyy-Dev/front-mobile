@@ -36,7 +36,7 @@ class FCMBackendServicio {
       final userId = userData['id'];
       
       // Enviar token al backend (usando endpoint existente)
-      final url = Uri.parse('$baseUrl/fcm/token');
+      final url = Uri.parse('$baseUrl/fcm/registrar-token/');
       final response = await http.post(
         url,
         headers: {

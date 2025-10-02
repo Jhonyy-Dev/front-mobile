@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../welcome_screen.dart';
 import 'screens_migration/home.dart';
-import 'referral_code_screen.dart';
-// import '../services/auth_service.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-import 'package:mi_app_flutter/providers/theme_provider.dart';
-
 import 'package:mi_app_flutter/login_medical/forgot_password_screen.dart';
-
+import 'referral_code_screen.dart';
+import '../providers/theme_provider.dart';
 import '../servicios/login_servicio.dart';
+import '../servicios/session_preference_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -251,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const ReferralCodeScreen(),
+                                        builder: (context) => ReferralCodeScreen(),
                                       ),
                                     );
                                   },
@@ -325,6 +323,23 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
+      // FORZAR GUARDADO DE ELECCIÓN MIGRATION
+      print('🔵 EJECUTANDO GUARDADO MIGRATION - INICIO');
+      try {
+        await SessionPreferenceService.saveUserManualChoice('migration');
+        print('🔵 EJECUTANDO GUARDADO MIGRATION - EXITOSO');
+      } catch (e) {
+        print('🔵 ERROR EN GUARDADO MIGRATION: $e');
+        // Método de respaldo directo
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('emergency_choice', 'migration');
+          print('🔵 GUARDADO DE EMERGENCIA MIGRATION EXITOSO');
+        } catch (e2) {
+          print('🔵 FALLO TOTAL MIGRATION: $e2');
+        }
+      }
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

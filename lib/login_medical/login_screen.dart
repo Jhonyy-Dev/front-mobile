@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../welcome_screen.dart';
 import 'screens_medical/home.dart';
-import 'forgot_password_screen.dart';
-import 'referral_code_screen.dart';
 import '../servicios/login_servicio.dart';
+import '../servicios/session_preference_service.dart';
+import '../servicios/preference_usuario.dart';
+import 'referral_code_screen.dart';
+import 'forgot_password_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -356,6 +358,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _emailController.text.trim(),
       _passwordController.text,
     );
+    
+    print('📊 RESPUESTA LOGIN MEDICAL: ${response['success']}');
 
     if (!mounted) return;
 
@@ -371,6 +375,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
+      // GUARDAR DATOS EN LAS CLAVES CORRECTAS DE MEDICAL
+      final data = response['data'];
+      await guardarDatosUsuarioMedical(data['token'], data['user']);
+      
+      // Guardar que el usuario eligió Medical manualmente
+      await SessionPreferenceService.saveUserManualChoice('medical');
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
