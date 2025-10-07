@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-// import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mi_app_flutter/baseUrl.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
 
 
 class CitasServicio {
-  final Uri url = Uri.parse("$baseUrl/citas/");
+  final Uri url = Uri.parse("$baseUrl/citas");
 
   Future<Map<String, dynamic>> registrarCita({
     required String fechaCita,
@@ -43,7 +43,6 @@ class CitasServicio {
       );
 
       final responseData = jsonDecode(response.body);
-
       if (response.statusCode == 201) {
 
         return {'exito': true, 'mensaje': 'Cita registrada correctamente.'};
@@ -70,18 +69,17 @@ class CitasServicio {
       final String userId = datosUsuario['usuario']['id'].toString();
       final String userName = datosUsuario['usuario']['nombre'];
       
-      print("🔍 Usuario autenticado en Flutter - ID: $userId, Nombre: $userName");
 
       final response = await http.get(
-        Uri.parse("$baseUrl/citasUsuarios/"), 
+        Uri.parse("$baseUrl/citasUsuarios"), 
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
-
+      print('prueba'+ response.body);
       final responseData = jsonDecode(response.body);
-
+    
       if (response.statusCode == 200) {
         return {'exito': true, 'citas': responseData};
       } else {
@@ -99,11 +97,10 @@ class CitasServicio {
 
       final token = datosUsuario?['token'];
       
-      print("Token: $token");
 
       final response = await http.delete(
         
-        Uri.parse("$baseUrl/citas/$citaId"),
+        Uri.parse("$baseUrl/citas/$citaId/"),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

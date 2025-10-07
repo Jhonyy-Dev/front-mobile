@@ -9,7 +9,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 
 class DocumentoUsuario {
-  final Uri url = Uri.parse("$baseUrl/documentosUsuario/");
+  final Uri url = Uri.parse("$baseUrl/documentosUsuario");
 
   Future<Map<String, dynamic>> registraDocumento({
     required List<int> archivoBytes,
@@ -55,7 +55,7 @@ class DocumentoUsuario {
 
 
    Future<List<Map<String, dynamic>>> obtenerDocumentos() async {
-    final url = Uri.parse("$baseUrl/documentosUsuario");
+    final url = Uri.parse("$baseUrl/documentosUsuario/");
 
     try {
       final datosUsuario = await obtenerDatosUsuario();

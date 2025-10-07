@@ -15,17 +15,13 @@ class CategoriaServicio {
       );
 
       if (response.statusCode == 200) {
-        print("✅ Categorías obtenidas exitosamente");
         final List<dynamic> data = jsonDecode(response.body);
-        print("📊 Cantidad de categorías: ${data.length}");
         return List<Map<String, dynamic>>.from(data);
         
       } else {
-        print("❌ Error al obtener categorías: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
-      print("Error al obtener categorías: $e");
       return null;
     }
   }

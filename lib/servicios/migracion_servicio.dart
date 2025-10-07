@@ -35,7 +35,7 @@ class MigracionServicio {
 
 
      Future<List<Map<String, dynamic>>?> obtenerMigracionesUsuarios() async {
-          final url = Uri.parse("$baseUrl/migracionesUsuarios");
+          final url = Uri.parse("$baseUrl/migracionesUsuarios/");
 
           try {
             final prefs = await SharedPreferences.getInstance();

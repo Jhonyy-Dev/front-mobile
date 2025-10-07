@@ -6,7 +6,7 @@ import 'package:mi_app_flutter/login_medical/screens_medical/chats_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/appointment_psychology_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/categories_screen.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/historial_medico_screen.dart';
-import 'package:mi_app_flutter/login_medical/screens_medical/documentos_medicos_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/documento_reclamo_screen.dart';
 import 'package:mi_app_flutter/login_medical/widgets/historial_medico_card.dart';
 import 'package:mi_app_flutter/login_medical/widgets/documentos_medicos_card.dart';
 import 'package:mi_app_flutter/login_medical/widgets/cumpleanos_banner.dart';
@@ -30,6 +30,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/news_article.dart';
 import 'package:mi_app_flutter/widgets/pulsing_button.dart';
 import 'package:mi_app_flutter/login_medical/mapa_screen.dart';
+import 'package:mi_app_flutter/login_medical/screens_medical/polizas_cobertura_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> {
 
     if (userData != null) {
       setState(() {
-        userName = userData['usuario']['nombre'];
+        userName = userData['usuario']['name'];
       });
     }
   }
@@ -113,8 +114,9 @@ class _HomePageState extends State<HomePage> {
   void _cargarCitasActualizadas() {
     setState(() {
       futureCitas = citasServicio.obtenerCitas();
+      print("Citas actualizadas cargadas"+futureCitas.toString());
     });
-    print("Citas actualizadas cargadas");
+    print("Citas actualizadas cargadas" + futureCitas.toString());
   }
 
   // Método para verificar si es cumpleaños
@@ -1136,6 +1138,7 @@ class _HomePageState extends State<HomePage> {
                         if (result['exito'] != true) {
                           return Center(child: Text(result['mensaje']));
                         }
+                        print(result);
                         final List citas = result['citas'];
 
                         if (citas.isEmpty) {
@@ -1573,7 +1576,7 @@ class _HomePageState extends State<HomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const DocumentosMedicosScreen(),
+                                  builder: (context) => const DocumentoReclamosScreen(),
                                 ),
                               );
                             },
@@ -1586,11 +1589,10 @@ class _HomePageState extends State<HomePage> {
                           // Tarjeta de Pólizas y cobertura
                           PolizasCobertura(
                             onTap: () {
-                              // TODO: Navegar a la pantalla de pólizas cuando esté lista
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Funcionalidad en desarrollo'),
-                                  duration: Duration(seconds: 2),
+                             Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>  PolizasCoberturaScreen(),
                                 ),
                               );
                             },

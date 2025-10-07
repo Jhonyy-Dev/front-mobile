@@ -19,9 +19,7 @@ class CumpleanosBackgroundServicioMedical {
       // Programar verificación diaria a las 00:00:01 AM (inicio del día)
       await programarVerificacionDiaria();
       
-      print('🎂 Servicio de cumpleaños MEDICAL en segundo plano inicializado');
     } catch (e) {
-      print('❌ Error inicializando servicio de cumpleaños MEDICAL: $e');
     }
   }
   
@@ -42,9 +40,7 @@ class CumpleanosBackgroundServicioMedical {
         ),
       );
       
-      print('📅 Verificación diaria de cumpleaños MEDICAL programada para las 00:00:01 AM');
     } catch (e) {
-      print('❌ Error programando verificación diaria MEDICAL: $e');
     }
   }
   
@@ -60,14 +56,12 @@ class CumpleanosBackgroundServicioMedical {
   /// Verificar cumpleaños en segundo plano
   static Future<void> verificarCumpleanosBackground() async {
     try {
-      print('🎂 Verificando cumpleaños MEDICAL en segundo plano...');
       
       final prefs = await SharedPreferences.getInstance();
       
       // Obtener datos del usuario MEDICAL
       final userDataString = prefs.getString('usuario_medical');
       if (userDataString == null) {
-        print('⚠️ No hay datos de usuario MEDICAL en segundo plano');
         return;
       }
       
@@ -79,7 +73,6 @@ class CumpleanosBackgroundServicioMedical {
       final nombreUsuario = nombreCompleto.split(' ').first;
       
       if (fechaNacimiento == null || userId == null) {
-        print('⚠️ Faltan datos de cumpleaños o ID de usuario MEDICAL');
         return;
       }
       
@@ -87,11 +80,9 @@ class CumpleanosBackgroundServicioMedical {
       final DateTime fechaNac = DateTime.parse(fechaNacimiento);
       final DateTime hoy = DateTime.now();
       
-      print('📅 Verificando MEDICAL: ${fechaNac.day}/${fechaNac.month} vs ${hoy.day}/${hoy.month}');
       
       if (fechaNac.day == hoy.day && fechaNac.month == hoy.month) {
         // ¡ES CUMPLEAÑOS!
-        print('🎉 ¡ES CUMPLEAÑOS DE $nombreUsuario (MEDICAL)!');
         
         // Verificar si ya se notificó este año
         final yaNotificado = prefs.getBool('cumpleanos_notificado_medical_${hoy.year}') ?? false;
@@ -106,15 +97,11 @@ class CumpleanosBackgroundServicioMedical {
           // Marcar como notificado
           await prefs.setBool('cumpleanos_notificado_medical_${hoy.year}', true);
           
-          print('✅ Notificación de cumpleaños MEDICAL enviada exitosamente');
         } else {
-          print('ℹ️ Ya se envió notificación de cumpleaños MEDICAL este año');
         }
       } else {
-        print('📅 No es cumpleaños hoy (MEDICAL)');
       }
     } catch (e) {
-      print('❌ Error verificando cumpleaños MEDICAL en segundo plano: $e');
     }
   }
   
@@ -126,7 +113,6 @@ class CumpleanosBackgroundServicioMedical {
         mensaje: '¡Que pases un día súper hermoso con tus seres amados! ❤️✨',
       );
     } catch (e) {
-      print('❌ Error enviando notificación local de cumpleaños MEDICAL: $e');
     }
   }
   
@@ -146,16 +132,13 @@ class CumpleanosBackgroundServicioMedical {
         }),
       ).timeout(Duration(seconds: 30));
       
-      print('📱 Respuesta backend cumpleaños MEDICAL: ${response.statusCode}');
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          print('✅ Notificación de cumpleaños MEDICAL enviada via backend');
         }
       }
     } catch (e) {
-      print('❌ Error enviando notificación backend MEDICAL: $e');
     }
   }
   
@@ -163,9 +146,7 @@ class CumpleanosBackgroundServicioMedical {
   static Future<void> cancelarTareas() async {
     try {
       await Workmanager().cancelByUniqueName(TASK_NAME);
-      print('🛑 Tareas de cumpleaños MEDICAL canceladas');
     } catch (e) {
-      print('❌ Error cancelando tareas MEDICAL: $e');
     }
   }
 }
@@ -175,19 +156,16 @@ class CumpleanosBackgroundServicioMedical {
 void callbackDispatcherMedical() {
   Workmanager().executeTask((task, inputData) async {
     try {
-      print('🔄 Ejecutando tarea MEDICAL en segundo plano: $task');
       
       switch (task) {
         case CumpleanosBackgroundServicioMedical.TASK_NAME:
           await CumpleanosBackgroundServicioMedical.verificarCumpleanosBackground();
           break;
         default:
-          print('⚠️ Tarea MEDICAL desconocida: $task');
       }
       
       return Future.value(true);
     } catch (e) {
-      print('❌ Error en callback dispatcher MEDICAL: $e');
       return Future.value(false);
     }
   });

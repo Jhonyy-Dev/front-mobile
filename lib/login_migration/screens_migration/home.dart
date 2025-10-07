@@ -143,7 +143,7 @@ class _HomePageState extends State<HomePage> {
       if (userData != null) {
         setState(() {
           // Actualizar datos del usuario en esta pantalla
-          userName = userData['usuario']['nombre'] ?? 'Usuario';
+          userName = userData['usuario']['name'] ?? 'Usuario';
           imagenUrl = userData['usuario']['imagen_url'] ?? '';
           isLoading = false;
         });
@@ -269,15 +269,15 @@ class _HomePageState extends State<HomePage> {
         
         // Si no hay citas, agregar una cita de ejemplo
         if (migraciones.isEmpty) {
-          migraciones.add({
-            'id': 1,
-            'estado_caso': 'Audiencia Pendiente',
-            'estado_asilo': 'En Proceso',
-            'fecha_audiencia': '20/04/2025',
-            'descripcion': 'Audiencia para revisión de caso de asilo',
-            'lugar': 'Corte de Inmigración',
-            'hora': '8:00 a.m.'
-          });
+          // migraciones.add({
+          //   'id': 1,
+          //   'estado_caso': 'Audiencia Pendiente',
+          //   'estado_asilo': 'En Proceso',
+          //   'fecha_audiencia': '20/04/2025',
+          //   'descripcion': 'Audiencia para revisión de caso de asilo',
+          //   'lugar': 'Corte de Inmigración',
+          //   'hora': '8:00 a.m.'
+          // });
         }
         
         return migraciones;
@@ -2146,69 +2146,117 @@ class _HomePageState extends State<HomePage> {
   final Color cardColor = isDarkMode ? Color(0xFF2A2A2A) : Colors.grey.shade50;
   final Color dividerColor = isDarkMode ? Colors.white24 : Colors.black12;
   
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return Dialog(
-            backgroundColor: backgroundColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              padding: EdgeInsets.all(0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Encabezado con título y botón de cerrar
-                  Container(
-                    padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+ showDialog(
+  context: context,
+  builder: (BuildContext context) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // ✅ Función declarada ANTES de su uso
+        Widget _buildInfoItem({
+          required String title,
+          required String value,
+          required IconData icon,
+          required Color textColor,
+          required Color subtitleColor,
+          required Color backgroundColor,
+        }) {
+          return Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: subtitleColor.withOpacity(0.1)),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: primaryColor, size: 24),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: subtitleColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "Detalles del Caso",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Dialog(
+          backgroundColor: backgroundColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            padding: EdgeInsets.all(0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Encabezado
+                Container(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
                     ),
                   ),
-                  
-                  // Contenido principal
-                  Container(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Detalles del Caso",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.close, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Contenido principal
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                  ),
+                  child: SingleChildScrollView(
                     padding: EdgeInsets.all(24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Estado del Caso
                         _buildInfoItem(
                           title: "Estado del Caso",
                           value: migracion['estado_caso'] ?? 'Pendiente',
@@ -2218,41 +2266,39 @@ class _HomePageState extends State<HomePage> {
                           backgroundColor: cardColor,
                         ),
                         SizedBox(height: 16),
-                        
-                        // Estado de Asilo (Dropdown)
-                      Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Estado de Asilo",
-                                style: TextStyle(
-                                  color: subtitleColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: cardColor,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: dividerColor),
-                                ),
-                                child: TextField(
-                                  controller: TextEditingController(text: estadoAsiloSeleccionado),
-                                  enabled: false,
-                                  decoration: InputDecoration.collapsed(hintText: ''),
-                                  style: TextStyle(color: textColor, fontSize: 16),
-                                ),
-                              ),
-                            ],
-                          ),
 
-                        
+                        // Estado de Asilo
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Estado de Asilo",
+                              style: TextStyle(
+                                color: subtitleColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: dividerColor),
+                              ),
+                              child: TextField(
+                                controller: TextEditingController(text: estadoAsiloSeleccionado),
+                                enabled: false,
+                                decoration: InputDecoration.collapsed(hintText: ''),
+                                style: TextStyle(color: textColor, fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+
                         SizedBox(height: 16),
-                        
-                        // Fecha de Corte
+
                         _buildInfoItem(
                           title: "Fecha de Corte",
                           value: migracion['fecha_audiencia'] ?? '2025-04-23',
@@ -2262,8 +2308,7 @@ class _HomePageState extends State<HomePage> {
                           backgroundColor: cardColor,
                         ),
                         SizedBox(height: 16),
-                        
-                        // Fecha para (combinación de fecha y estado de asilo)
+
                         _buildInfoItem(
                           title: "Fecha para",
                           value: "${migracion['fecha_audiencia'] ?? '2025-04-23'} - $estadoAsiloSeleccionado",
@@ -2273,8 +2318,8 @@ class _HomePageState extends State<HomePage> {
                           backgroundColor: cardColor,
                         ),
                         SizedBox(height: 16),
-                        
-                        // Someter Asilo antes de los X días
+
+                        // Someter Asilo antes de...
                         Container(
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -2296,11 +2341,7 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.white.withOpacity(0.2),
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
-                                  Icons.hourglass_top,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                                child: Icon(Icons.hourglass_top, color: Colors.white, size: 24),
                               ),
                               SizedBox(width: 16),
                               Expanded(
@@ -2344,12 +2385,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         SizedBox(height: 16),
-                        
-                        // Nota
-                        if (migracion['nota'] != null && migracion['nota'] != 'Sin nota') ...[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+
+                            if (migracion['nota'] != null && migracion['nota'] != 'Sin nota') ...[
                               Text(
                                 "Nota",
                                 style: TextStyle(
@@ -2372,48 +2409,88 @@ class _HomePageState extends State<HomePage> {
                                   style: TextStyle(
                                     color: textColor,
                                     fontSize: 14,
+                                    height: 1.5,
                                   ),
+                                  softWrap: true,
+                                  overflow: TextOverflow.visible,
+                                  maxLines: null,
                                 ),
                               ),
+                              SizedBox(height: 16),
                             ],
-                          ),
-                        ],
+
+                            // 🆕 Nuevos datos: Dirección, Tracking, Dirección Usial
+                            if (migracion['direccion_id'] != null ||
+                                migracion['tracking'] != null ||
+                                migracion['direccion_usial'] != null) ...[
+                              _buildInfoItem(
+                                title: "Dirección ",
+                               value: migracion['direccion'] != null
+                                ? (migracion['direccion']['nombre']?.toString() ?? 'Sin dirección')
+                                : 'Sin dirección',
+                                icon: Icons.location_on,
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                backgroundColor: cardColor,
+                              ),
+                              SizedBox(height: 16),
+
+                              _buildInfoItem(
+                                title: "Tracking",
+                                value: migracion['tracking'] ?? 'Sin tracking',
+                                icon: Icons.local_shipping,
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                backgroundColor: cardColor,
+                              ),
+                              SizedBox(height: 16),
+
+                              _buildInfoItem(
+                                title: "Dirección Usial",
+                                value: migracion['direccion_usial'] ?? 'Sin dirección',
+                                icon: Icons.home,
+                                textColor: textColor,
+                                subtitleColor: subtitleColor,
+                                backgroundColor: cardColor,
+                              ),
+                            ],
+
+                        
                       ],
                     ),
                   ),
-                  
-                  // Botón de acción
-                  Container(
-                    padding: EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                        minimumSize: Size(double.infinity, 48),
+                ),
+
+                // Botón Cerrar
+                Container(
+                  padding: EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(
-                        "Cerrar",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      elevation: 0,
+                      minimumSize: Size(double.infinity, 48),
+                    ),
+                    child: Text(
+                      "Cerrar",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      );
-    },
-  );
+          ),
+        );
+      },
+    );
+  },
+);
+
 }
 
 // Widget auxiliar para construir elementos de información

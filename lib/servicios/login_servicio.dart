@@ -8,7 +8,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
 
-   final url = Uri.parse("$baseUrl/login/");
+   final url = Uri.parse("$baseUrl/login");
 
     try {
       final response = await http.post(

@@ -57,7 +57,7 @@ class PerfilServicio {
   required String fecha_nacimiento,
   File? imagen,
 }) async {
-  final url = Uri.parse("$baseUrl/actualizarPerfil/"); // Agregar barra final
+  final url = Uri.parse("$baseUrl/actualizarPerfil"); // Agregar barra final
 
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('token');
@@ -101,7 +101,7 @@ class PerfilServicio {
     // Enviar la solicitud
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-
+    print("perifl actualizar xd:${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
