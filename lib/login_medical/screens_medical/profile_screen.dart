@@ -35,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final picker = ImagePicker();
   File? _imagen;
   final PerfilServicio _perfilServicio = PerfilServicio();
+  bool _imageLoadError = false;
 
   Future<Map<String, dynamic>?> obtenerDatosUsuario() async {
     try {
@@ -181,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return NetworkImage(url);
     } else {
       // Si es una ruta relativa del servidor
-      return NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$url");
+      return NetworkImage("https://inmigracion.maval.tech/storage/$url");
     }
   }
 
@@ -1145,12 +1146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             image: _getImageProvider(imagenUrl),
                             fit: BoxFit.cover,
                             onError: (exception, stackTrace) {
-                              print('Error loading profile image: $exception');
-                              // Si hay un error al cargar la imagen, intentar usar la imagen local
-                              if (_imagenLocal != null) {
-                                setState(() {
-                                  imagenUrl = '';  // Limpiar la URL para que use la imagen local
-                                });
+                              if (!_imageLoadError) {
+                                _imageLoadError = true;
+                                // NO imprimir nada - logs limpios
                               }
                             },
                           ),
@@ -1386,6 +1384,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: const Color(0xFF4485FD), // Color azul para el número
                         ),
                       ),
+                      
+                      // Espaciado final para evitar que se tape con botones de Android
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),

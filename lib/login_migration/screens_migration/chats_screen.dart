@@ -46,7 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _userAvatarUrl = imagenUrl;
           } else {
             // Es una imagen del servidor
-            _userAvatarUrl = "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl";
+            _userAvatarUrl = "https://inmigracion.maval.tech/storage/$imagenUrl";
           }
         });
       } else if (imagenLocalPath != null && imagenLocalPath.isNotEmpty) {

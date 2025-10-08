@@ -121,7 +121,7 @@ class FirebaseNotificacionesServicio {
       }
 
       // Enviar token al backend
-      final url = Uri.parse('$baseUrl/fcm/registrar-token/');
+      final url = Uri.parse('$baseUrl/fcm/registrar-token');
       print('🔗 URL completa: $url');
       
       final response = await http.post(

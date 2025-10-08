@@ -1152,7 +1152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : NetworkImage(
                                     imagenUrl.startsWith('http') 
                                       ? imagenUrl 
-                                      : "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl"
+                                      : "https://inmigracion.maval.tech/storage/$imagenUrl"
                                   )
                               : _imagenLocal ?? const AssetImage('assets/doctor.webp') as ImageProvider,
                             fit: BoxFit.cover,

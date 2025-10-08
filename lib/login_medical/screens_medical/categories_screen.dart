@@ -92,7 +92,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               : Image.network(
                   category['imagen_ruta'].startsWith('http')
                     ? category['imagen_ruta']
-                    : "https://api-inmigracion.maval.tech/storage/categorias/${category['imagen_ruta']}",
+                    : "https://inmigracion.maval.tech/storage/${category['imagen_ruta']}",
                   width: 48,
                   height: 48,
                   fit: BoxFit.cover,

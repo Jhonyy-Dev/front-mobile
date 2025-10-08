@@ -1417,62 +1417,65 @@ class _OpenStreetMapPageState extends State<OpenStreetMapPage> {
                   ],
                 ),
       // Usar el mismo navbar que existe en HomePage
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Color(0xFF1E1E1E) // Color oscuro para modo oscuro
-              : Colors.white,     // Color claro para modo claro
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                  );
-                },
-                child: _buildNavItem(Icons.home_outlined, false),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // Ya estamos en el mapa
-                },
-                child: _buildNavItem(Icons.location_on_outlined, true),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChatScreen()),
-                  );
-                },
-                child: _buildNavItem(Icons.calendar_today_outlined, false),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()),
-                  );
-                },
-                child: _buildNavItem(Icons.person_outline, false),
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Color(0xFF1E1E1E) // Color oscuro para modo oscuro
+                : Colors.white,     // Color claro para modo claro
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, -5),
               ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
+                  child: _buildNavItem(Icons.home_outlined, false),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // Ya estamos en el mapa
+                  },
+                  child: _buildNavItem(Icons.location_on_outlined, true),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChatScreen()),
+                    );
+                  },
+                  child: _buildNavItem(Icons.calendar_today_outlined, false),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                    );
+                  },
+                  child: _buildNavItem(Icons.person_outline, false),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mi_app_flutter/login_migration/screens_migration/profile_screen.dart';
 import 'package:mi_app_flutter/login_migration/screens_migration/chats_screen.dart';
@@ -20,8 +21,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mi_app_flutter/servicios/preference_usuario.dart';
 import 'package:mi_app_flutter/servicios/documentos_usuario.dart';
-import 'dart:io';
-
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:open_file/open_file.dart'; // Reemplazado por url_launcher
 import 'package:permission_handler/permission_handler.dart';
@@ -115,6 +114,7 @@ class _HomePageState extends State<HomePage> {
   String imagenUrl = '';
   bool isLoading = true;
   ImageProvider? _imagenLocal;
+  bool _imageLoadError = false;
 
   Future<void> _cargarImagenLocal() async {
     try {
@@ -896,17 +896,14 @@ class _HomePageState extends State<HomePage> {
                                     : NetworkImage(
                                         imagenUrl.startsWith('http') 
                                           ? imagenUrl 
-                                          : "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl"
+                                          : "https://inmigracion.maval.tech/storage/$imagenUrl"
                                       ) as ImageProvider
                                   : _imagenLocal ?? const AssetImage('assets/doctor.webp') as ImageProvider,
                                 fit: BoxFit.cover,
                                 onError: (exception, stackTrace) {
-                                  print('Error loading profile image: $exception');
-                                  // Si hay un error al cargar la imagen, intentar usar la imagen local
-                                  if (_imagenLocal != null) {
-                                    setState(() {
-                                      imagenUrl = '';  // Limpiar la URL para que use la imagen local
-                                    });
+                                  if (!_imageLoadError) {
+                                    _imageLoadError = true;
+                                    // NO imprimir nada - logs limpios
                                   }
                                 },
                               ),
@@ -1748,55 +1745,58 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() => _selectedNavIndex = 0);
-                },
-                child: _buildNavItem(Icons.home, _selectedNavIndex == 0),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChatScreen(),
-                    ),
-                  );
-                  setState(() => _selectedNavIndex = 1);
-                },
-                child: _buildNavItem(Icons.chat, _selectedNavIndex == 1),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
-                    ),
-                  );
-                  setState(() => _selectedNavIndex = 2);
-                },
-                child: _buildNavItem(Icons.person, _selectedNavIndex == 2),
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, -5),
               ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedNavIndex = 0);
+                  },
+                  child: _buildNavItem(Icons.home, _selectedNavIndex == 0),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatScreen(),
+                      ),
+                    );
+                    setState(() => _selectedNavIndex = 1);
+                  },
+                  child: _buildNavItem(Icons.chat, _selectedNavIndex == 1),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                    setState(() => _selectedNavIndex = 2);
+                  },
+                  child: _buildNavItem(Icons.person, _selectedNavIndex == 2),
+                ),
+              ],
+            ),
           ),
         ),
       ),

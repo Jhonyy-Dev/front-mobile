@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
   ImageProvider? _imagenLocal;
   bool esCumpleanos = false;
   bool mostrarBannerCumpleanos = true;
+  bool _imageLoadError = false;
 
   void cargarUsuarioDatos() async {
     // AuthService authService = AuthService();
@@ -962,17 +963,14 @@ class _HomePageState extends State<HomePage> {
                                     : NetworkImage(
                                         imagenUrl.startsWith('http') 
                                           ? imagenUrl 
-                                          : "https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl"
+                                          : "https://inmigracion.maval.tech/storage/$imagenUrl"
                                       ) as ImageProvider
                                   : _imagenLocal ?? const AssetImage('assets/doctor.webp') as ImageProvider,
                                 fit: BoxFit.cover,
                                 onError: (exception, stackTrace) {
-                                  print('Error loading profile image: $exception');
-                                  // Si hay un error al cargar la imagen, intentar usar la imagen local
-                                  if (_imagenLocal != null) {
-                                    setState(() {
-                                      imagenUrl = '';  // Limpiar la URL para que use la imagen local
-                                    });
+                                  if (!_imageLoadError) {
+                                    _imageLoadError = true;
+                                    // NO imprimir nada - logs limpios
                                   }
                                 },
                               ),
@@ -1500,8 +1498,8 @@ class _HomePageState extends State<HomePage> {
                                               ? const Icon(Icons.image_not_supported)
                                               : Image.network(
                                                   categoria['imagen_ruta'].startsWith('http')
-                                                    ? categoria['imagen_ruta']
-                                                    : "https://api-inmigracion.maval.tech/storage/categorias/${categoria['imagen_ruta']}",
+                                                    ? categoria['imagen_ruta'].replaceAll('/public/storage/', '/storage/')
+                                                    : "https://inmigracion.maval.tech/storage/${categoria['imagen_ruta']}",
                                                   fit: BoxFit.cover,
                                                   errorBuilder: (context, error, stackTrace) {
                                                     return const Icon(Icons.broken_image);
@@ -1616,77 +1614,80 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() => _selectedNavIndex = 0);
-                },
-                child:
-                    _buildNavItem(Icons.home_outlined, _selectedNavIndex == 0),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const OpenStreetMapPage(), // Aquí se navega a OpenStreetMapPage
-                    ),
-                  );
-                  setState(() => _selectedNavIndex = 1);
-                },
-                child: _buildNavItem(
-                  Icons.location_on_outlined,
-                  _selectedNavIndex == 1,
-                ),
-              ),
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ChatScreen(),
-                    ),
-                  );
-                  setState(() => _selectedNavIndex = 2);
-                },
-                child: _buildNavItem(
-                    Icons.calendar_today_outlined, _selectedNavIndex == 2),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
-                    ),
-                  );
-                  setState(() => _selectedNavIndex = 3);
-                },
-                child:
-                    _buildNavItem(Icons.person_outline, _selectedNavIndex == 3),
+      bottomNavigationBar: SafeArea(
+        bottom: true,
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, -5),
               ),
             ],
           ),
-        ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedNavIndex = 0);
+                  },
+                  child:
+                      _buildNavItem(Icons.home_outlined, _selectedNavIndex == 0),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OpenStreetMapPage(), // Aquí se navega a OpenStreetMapPage
+                      ),
+                    );
+                    setState(() => _selectedNavIndex = 1);
+                  },
+                  child: _buildNavItem(
+                    Icons.location_on_outlined,
+                    _selectedNavIndex == 1,
+                  ),
+                ),
 
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatScreen(),
+                      ),
+                    );
+                    setState(() => _selectedNavIndex = 2);
+                  },
+                  child: _buildNavItem(
+                      Icons.calendar_today_outlined, _selectedNavIndex == 2),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                    setState(() => _selectedNavIndex = 3);
+                  },
+                  child:
+                      _buildNavItem(Icons.person_outline, _selectedNavIndex == 3),
+                ),
+              ],
+            ),
+          ),
+
+        ),
       ),
     );
   }

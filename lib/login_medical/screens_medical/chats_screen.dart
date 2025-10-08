@@ -551,7 +551,7 @@ class MessageBubble extends StatelessWidget {
       return NetworkImage(imageUrl);
     } else if (imageUrl.isNotEmpty) {
       // Si es una ruta relativa del servidor
-      return NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$imageUrl");
+      return NetworkImage("https://inmigracion.maval.tech/storage/$imageUrl");
     } else {
       // Si no coincide con ninguno de los patrones anteriores o está vacío, usar imagen por defecto
       return AssetImage('assets/doctor.webp');

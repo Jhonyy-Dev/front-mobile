@@ -118,7 +118,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       } else if (imagenUrl.isNotEmpty) {
         // Si es una ruta relativa del servidor
         setState(() {
-          _imagenExistente = NetworkImage("https://api-inmigracion.maval.tech/storage/usuarios/$imagenUrl");
+          _imagenExistente = NetworkImage("https://inmigracion.maval.tech/storage/$imagenUrl");
           print("✅ Imagen del servidor sincronizada en EditarPerfil: $imagenUrl");
         });
       }
