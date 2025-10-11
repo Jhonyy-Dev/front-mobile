@@ -10,9 +10,26 @@ import 'login_medical/servicios/cumpleanos_background_servicio_medical.dart';
 import 'servicios/fcm_backend_servicio.dart';
 import 'servicios/firebase_notificaciones_servicio.dart';
 import 'servicios/notificaciones_servicio.dart';
+import 'services/video_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Reducir verbosidad de logs (filtrar logs nativos de Android)
+  debugPrint = (String? message, {int? wrapWidth}) {
+    // Filtrar logs molestos de MediaCodec/BufferPool
+    if (message != null && 
+        (message.contains('MediaCodec') ||
+         message.contains('BufferPool') ||
+         message.contains('CCodec') ||
+         message.contains('Codec2') ||
+         message.contains('PipelineWatcher') ||
+         message.contains('ImageReader_JNI'))) {
+      return; // Silenciar estos logs
+    }
+    // Imprimir otros logs normalmente
+    print(message);
+  };
   
   // Cargar variables de entorno
   await dotenv.load(fileName: ".env");
@@ -50,6 +67,15 @@ void main() async {
     
   } catch (e) {
     print('⚠️ Error inicializando servicios de cumpleaños: $e');
+  }
+  
+  // Precargar video de fondo (para que aparezca instantáneamente)
+  try {
+    print('🎬 Precargando video de fondo...');
+    await VideoManager().initialize();
+    print('✅ Video de fondo listo');
+  } catch (e) {
+    print('⚠️ Error precargando video: $e');
   }
   
   // Firebase initialization commented out for iOS compatibility

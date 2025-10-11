@@ -39,7 +39,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String userName = '';
   String imagenUrl = '';
   bool isLoading = true;
@@ -47,6 +47,8 @@ class _HomePageState extends State<HomePage> {
   bool esCumpleanos = false;
   bool mostrarBannerCumpleanos = true;
   bool _imageLoadError = false;
+  late AnimationController _floatingAnimationController;
+  late Animation<double> _floatingAnimation;
 
   void cargarUsuarioDatos() async {
     // AuthService authService = AuthService();
@@ -62,9 +64,11 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
   int _selectedNavIndex = 0;
   final List<String> _bannerImages = [
-    'assets/doctor.webp',
-    'assets/doctor2.webp',
-    'assets/doctor3.jpg',
+    'assets/banners/doctor.webp',
+    'assets/banners/doctor2.webp',
+    'assets/banners/doctor3.jpg',
+    'assets/instagram-banner.jpg',
+    'assets/tiktok-banner.jpg',
   ];
   List<NewsArticle> _newsArticles = [];
   int _displayedNewsCount = 2;
@@ -107,6 +111,19 @@ class _HomePageState extends State<HomePage> {
     
     // Registrar token FCM de forma segura (no rompe si Firebase falla)
     FirebaseNotificacionesServicio.registrarTokenSeguro();
+    
+    // Inicializar animación flotante para el botón de WhatsApp
+    _floatingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
+    _floatingAnimation = Tween<double>(begin: -3, end: 3).animate(
+      CurvedAnimation(
+        parent: _floatingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     
     print('Métodos de inicialización llamados');
   }
@@ -860,6 +877,7 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _newsRefreshTimer
         ?.cancel(); // Cancela el timer cuando se destruye el widget
+    _floatingAnimationController.dispose();
     super.dispose();
   }
 
@@ -877,23 +895,69 @@ class _HomePageState extends State<HomePage> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          print('🔴 PROBANDO NOTIFICACIONES MEDICAL EN SEGUNDO PLANO - DELAY 1 MINUTO');
-          
-          // Obtener el primer nombre del usuario actual
-          final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
-          
-          // Usar el nuevo método con delay de 60 segundos (1 minuto)
-          await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
-            titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
-            mensaje: '¡Que pases un día súper hermoso con tus seres queridos! ❤️✨',
-            segundosDelay: 60, // 1 minuto de delay
-          );
-        },
-        child: Icon(Icons.notifications, color: Colors.white),
-        backgroundColor: Colors.blue, // Azul para diferenciarlo de Migration (rojo)
-        tooltip: 'Probar notificación MEDICAL en segundo plano (1 min delay)',
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Botón de WhatsApp con imagen 3D y animación flotante
+          AnimatedBuilder(
+            animation: _floatingAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, _floatingAnimation.value),
+                child: child,
+              );
+            },
+            child: GestureDetector(
+              onTap: () async {
+                final url = Uri.parse('https://wa.me/17863022840');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/whatsapp.webp',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Botón de notificaciones
+          FloatingActionButton(
+            onPressed: () async {
+              print('🔴 PROBANDO NOTIFICACIONES MEDICAL EN SEGUNDO PLANO - DELAY 1 MINUTO');
+              
+              // Obtener el primer nombre del usuario actual
+              final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
+              
+              // Usar el nuevo método con delay de 60 segundos (1 minuto)
+              await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
+                titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
+                mensaje: '¡Que pases un día súper hermoso con tus seres queridos! ❤️✨',
+                segundosDelay: 60, // 1 minuto de delay
+              );
+            },
+            child: const Icon(Icons.notifications, color: Colors.white),
+            backgroundColor: Colors.blue, // Azul para diferenciarlo de Migration (rojo)
+            heroTag: 'notifications_medical',
+            tooltip: 'Probar notificación MEDICAL en segundo plano (1 min delay)',
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
@@ -1000,8 +1064,24 @@ class _HomePageState extends State<HomePage> {
                     SizedBox(
                       height: 160,
                       width: double.infinity,
-                      child: Stack(
-                        children: [
+                      child: GestureDetector(
+                        onHorizontalDragEnd: (DragEndDetails details) {
+                          if (details.primaryVelocity != null) {
+                            if (details.primaryVelocity! > 0) {
+                              // Deslizar hacia la derecha - retroceder
+                              setState(() {
+                                _currentPage = (_currentPage - 1 + _bannerImages.length) % _bannerImages.length;
+                              });
+                            } else if (details.primaryVelocity! < 0) {
+                              // Deslizar hacia la izquierda - avanzar
+                              setState(() {
+                                _currentPage = (_currentPage + 1) % _bannerImages.length;
+                              });
+                            }
+                          }
+                        },
+                        child: Stack(
+                          children: [
                           // Animated Image Background
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 800),
@@ -1045,26 +1125,87 @@ class _HomePageState extends State<HomePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Buscando\nDoctores Especialistas?',
+                                Text(
+                                  _currentPage == 3
+                                      ? '¡Síguenos en\nInstagram!'
+                                      : _currentPage == 4
+                                          ? '¡Visita nuestro\nTikTok!'
+                                          : 'Buscando\nDoctores Especialistas?',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     height: 1.2,
+                                    shadows: [
+                                      Shadow(
+                                        offset: Offset(0, 2),
+                                        blurRadius: 8,
+                                        color: Colors.black.withOpacity(0.8),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Programa una cita con\nnuestros mejores doctores.',
+                                  _currentPage == 3
+                                      ? 'Descubre contenido exclusivo\ny mantente actualizado.'
+                                      : _currentPage == 4
+                                          ? 'Videos informativos y\nconsejos de salud.'
+                                          : 'Programa una cita con\nnuestros mejores doctores.',
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.9),
                                     fontSize: 14,
+                                    shadows: [
+                                      Shadow(
+                                        offset: Offset(0, 1),
+                                        blurRadius: 6,
+                                        color: Colors.black.withOpacity(0.7),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          // Botón "Ir Ahora" solo para banners de redes sociales
+                          if (_currentPage == 3 || _currentPage == 4)
+                            Positioned(
+                              bottom: 20,
+                              right: 20,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  // Aquí puedes agregar la navegación a las redes sociales
+                                  final urlString = _currentPage == 3
+                                      ? 'https://www.instagram.com/trustcountry/'
+                                      : 'https://www.tiktok.com/@trustcountry';
+                                  
+                                  final url = Uri.parse(urlString);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF4485FD),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  elevation: 3,
+                                  minimumSize: const Size(90, 36),
+                                ),
+                                child: const Text(
+                                  'Ir Ahora',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
                           // Animated Indicators
                           Positioned(
                             bottom: 20,
@@ -1088,6 +1229,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -1500,7 +1642,7 @@ class _HomePageState extends State<HomePage> {
                                                   categoria['imagen_ruta'].startsWith('http')
                                                     ? categoria['imagen_ruta'].replaceAll('/public/storage/', '/storage/')
                                                     : "https://inmigracion.maval.tech/storage/${categoria['imagen_ruta']}",
-                                                  fit: BoxFit.cover,
+                                                  fit: BoxFit.contain,
                                                   errorBuilder: (context, error, stackTrace) {
                                                     return const Icon(Icons.broken_image);
                                                   },

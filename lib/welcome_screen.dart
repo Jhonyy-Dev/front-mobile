@@ -4,6 +4,7 @@ import 'login_medical/login_screen.dart' as medical;
 import 'login_migration/login_screen.dart' as migration;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'widgets/video_background.dart';
 
 class WelcomeScreen extends StatelessWidget {
   // URL de la política de privacidad
@@ -16,25 +17,8 @@ class WelcomeScreen extends StatelessWidget {
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
     
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/welcome_bg.webp'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withOpacity(0.3),
-                Colors.black.withOpacity(0.7),
-              ],
-            ),
-          ),
-          child: SafeArea(
+      body: VideoBackground(
+        child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
@@ -46,6 +30,13 @@ class WelcomeScreen extends StatelessWidget {
                     style: textTheme.displaySmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(0, 2),
+                          blurRadius: 8,
+                          color: Colors.black.withOpacity(0.6),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -54,6 +45,13 @@ class WelcomeScreen extends StatelessWidget {
                       style: textTheme.titleSmall?.copyWith(
                         color: Colors.white70,
                         fontSize: 14,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black.withOpacity(0.5),
+                          ),
+                        ],
                       ),
                       children: const [
                         TextSpan(text: '#1 In '),
@@ -71,11 +69,18 @@ class WelcomeScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Which section would you\n like to go to?',
+                            'Which section would you\nlike to go to?',
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               color: Colors.white,
                               height: 1.4,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(0, 2),
+                                  blurRadius: 8,
+                                  color: Colors.black.withOpacity(0.7),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -164,6 +169,13 @@ class WelcomeScreen extends StatelessWidget {
                     TextSpan(
                       style: textTheme.bodySmall?.copyWith(
                         color: Colors.white70,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black.withOpacity(0.5),
+                          ),
+                        ],
                       ),
                       children: [
                         const TextSpan(text: 'By continuing, you agree to our '),
@@ -195,7 +207,6 @@ class WelcomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
         ),
       ),
     );

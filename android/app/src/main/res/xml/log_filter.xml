@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Filtrar logs de video codec -->
+    <string name="log_filter_codec">MediaCodec|CCodec|BufferPool|Codec2|PipelineWatcher|ImageReader_JNI</string>
+</resources>

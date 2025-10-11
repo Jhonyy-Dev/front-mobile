@@ -34,13 +34,15 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
   final Key _newsListKey = Key('newsListKey');
   final TextEditingController _searchController = TextEditingController();
   final String _searchQuery = '';
   final bool _isSearching = false;
+  late AnimationController _floatingAnimationController;
+  late Animation<double> _floatingAnimation;
  
   int _selectedNavIndex = 0;
   final DateTime _targetDate = DateTime(2025, 8, 20); 
@@ -284,6 +286,19 @@ class _HomePageState extends State<HomePage> {
       });
     
     _addDefaultDocuments(); // Añadir documentos por defecto
+    
+    // Inicializar animación flotante para el botón de WhatsApp
+    _floatingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
+    _floatingAnimation = Tween<double>(begin: -3, end: 3).animate(
+      CurvedAnimation(
+        parent: _floatingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   Future<void> fetchHealthNews() async {
@@ -779,6 +794,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _timer.cancel();
+    _floatingAnimationController.dispose();
     super.dispose();
   }
 
@@ -807,23 +823,69 @@ class _HomePageState extends State<HomePage> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          print('🔴 PROBANDO NOTIFICACIONES EN SEGUNDO PLANO - DELAY 1 MINUTO');
-          
-          // Obtener el primer nombre del usuario actual
-          final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
-          
-          // Usar el nuevo método con delay de 60 segundos (1 minuto)
-          await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
-            titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
-            mensaje: '¡Que pases un día súper hermoso con tus seres amados! ❤️✨',
-            segundosDelay: 60, // 1 minuto de delay
-          );
-        },
-        child: Icon(Icons.notifications, color: Colors.white),
-        backgroundColor: Colors.red, // Rojo para que sea muy visible
-        tooltip: 'Probar notificación en segundo plano (1 min delay)',
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Botón de WhatsApp con imagen 3D y animación flotante
+          AnimatedBuilder(
+            animation: _floatingAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, _floatingAnimation.value),
+                child: child,
+              );
+            },
+            child: GestureDetector(
+              onTap: () async {
+                final url = Uri.parse('https://wa.me/17863022840');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/whatsapp.webp',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Botón de notificaciones
+          FloatingActionButton(
+            onPressed: () async {
+              print('🔴 PROBANDO NOTIFICACIONES EN SEGUNDO PLANO - DELAY 1 MINUTO');
+              
+              // Obtener el primer nombre del usuario actual
+              final primerNombre = userName.isNotEmpty ? userName.split(' ').first : 'Usuario';
+              
+              // Usar el nuevo método con delay de 60 segundos (1 minuto)
+              await FirebaseNotificacionesServicio.enviarNotificacionLocalConDelay(
+                titulo: '🎉 ¡Feliz Cumpleaños $primerNombre!',
+                mensaje: '¡Que pases un día súper hermoso con tus seres amados! ❤️✨',
+                segundosDelay: 60, // 1 minuto de delay
+              );
+            },
+            child: const Icon(Icons.notifications, color: Colors.white),
+            backgroundColor: Colors.red, // Rojo para que sea muy visible
+            heroTag: 'notifications_migration',
+            tooltip: 'Probar notificación en segundo plano (1 min delay)',
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(

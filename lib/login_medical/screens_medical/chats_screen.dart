@@ -372,7 +372,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: MediaQuery.of(context).viewPadding.bottom > 0 
+                      ? MediaQuery.of(context).viewPadding.bottom 
+                      : 8,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
