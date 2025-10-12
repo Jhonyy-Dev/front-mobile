@@ -57,38 +57,42 @@ class CitasServicio {
   }
 
 
- Future<Map<String, dynamic>> obtenerCitas() async {
-    try {
-      final datosUsuario = await obtenerDatosUsuario();
-
-      if (datosUsuario == null) {
-        return {'exito': false, 'mensaje': 'Error: No se encontró el usuario o el token.'};
-      }
-
-      final String token = datosUsuario['token'];
-      final String userId = datosUsuario['usuario']['id'].toString();
-      final String userName = datosUsuario['usuario']['nombre'];
-      
-
-      final response = await http.get(
-        Uri.parse("$baseUrl/citasUsuarios"), 
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      print('prueba'+ response.body);
-      final responseData = jsonDecode(response.body);
-    
-      if (response.statusCode == 200) {
-        return {'exito': true, 'citas': responseData};
-      } else {
-        return {'exito': false, 'mensaje': responseData['mensaje'] ?? 'no se encontro citas'};
-      }
-    } catch (e) {
-      return {'exito': false, 'mensaje': 'no se encontro citas'};
+Future<Map<String, dynamic>> obtenerCitas() async {
+  try {
+    final datosUsuario = await obtenerDatosUsuario();
+    if (datosUsuario == null) {
+      return {'exito': false, 'mensaje': 'No se encontró el usuario o el token.'};
     }
+
+    final String token = datosUsuario['token'];
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/citasUsuarios"),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('🚀 [CITAS API] ${response.statusCode} → ${response.body}');
+
+    final responseData = response.body.isNotEmpty
+        ? jsonDecode(response.body)
+        : {};
+
+    if (response.statusCode == 200) {
+      return {'exito': true, 'citas': responseData};
+    } else {
+      return {
+        'exito': false,
+        'mensaje': responseData['mensaje'] ?? 'Error al obtener las citas.'
+      };
+    }
+  } catch (e) {
+    print('❌ Error al obtener citas: $e');
+    return {'exito': false, 'mensaje': 'Error al obtener citas. Intenta nuevamente.'};
   }
+}
 
 
     Future<String?> eliminarCita(int citaId) async {

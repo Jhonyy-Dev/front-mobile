@@ -60,6 +60,7 @@ Future<void> _handleSignUp() async {
       nombre: _nameController.text,
       email: _emailController.text,
       password: _passwordController.text,
+      tipo: 'medical',
     );
 
     setState(() {

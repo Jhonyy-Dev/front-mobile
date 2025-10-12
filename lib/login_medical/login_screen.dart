@@ -626,6 +626,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final response = await authService.login(
       _emailController.text.trim(),
       _passwordController.text,
+      'medical',
     );
     
     print('📊 RESPUESTA LOGIN MEDICAL: ${response['success']}');

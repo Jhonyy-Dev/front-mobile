@@ -12,6 +12,7 @@ class RegistrarusuarioServicio {
   required String nombre,
   required String email,
   required String password,
+  required String tipo,
 }) async {
   try {
     
@@ -25,6 +26,7 @@ class RegistrarusuarioServicio {
       'email': email,
       'password': password,
       'codigo_referido': codigoReferido,
+      'tipo': tipo,
      });
 
     final response = await http.post(
@@ -35,8 +37,11 @@ class RegistrarusuarioServicio {
   },
        body: body,
     );
+   
+    print('Status code: ${response.statusCode}');
+    print('Body: ${response.body}');  
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 201 || response.statusCode == 200) {
     
       final data = jsonDecode(response.body);
       print('Registro exitoso: $data');

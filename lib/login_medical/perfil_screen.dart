@@ -657,6 +657,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       _isEditing
                           ? TextField(
                               controller: _emailController,
+                              readOnly: true,
                               keyboardType: TextInputType.emailAddress,
                               style: TextStyle(color: textColor),
                               decoration: inputDecoration.copyWith(

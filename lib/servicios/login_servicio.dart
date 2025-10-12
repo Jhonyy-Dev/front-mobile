@@ -6,7 +6,7 @@ import 'package:mi_app_flutter/servicios/preference_usuario.dart';
 
 class AuthService {
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password, String tipo) async {
 
    final url = Uri.parse("$baseUrl/login");
 
@@ -14,7 +14,7 @@ class AuthService {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': email, 'password': password, 'tipo': tipo}),
       );
 
       final data = jsonDecode(response.body);

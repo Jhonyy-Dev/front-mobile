@@ -1559,6 +1559,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         itemBuilder: (context, index) {
                                           final doc = documentos[index];
                                           final nombre = doc['nombre_documentos'] ?? '';
+                                          final nombre_full = nombre.split('/').last;
                                           final extension = nombre.split('.').last.toLowerCase();
                                           final isImage = ['jpg', 'jpeg', 'png'].contains(extension);
                                           final tamanoTexto = doc['tamaño'] ?? '0 KB';
@@ -1603,7 +1604,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
                                                       Text(
-                                                        nombre,
+                                                        nombre_full,
                                                         style: TextStyle(
                                                           fontSize: MediaQuery.of(context).size.width < 360 ? 12 : 14,
                                                           fontWeight: FontWeight.w500,

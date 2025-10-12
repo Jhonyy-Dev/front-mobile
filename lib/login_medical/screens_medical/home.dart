@@ -82,7 +82,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Future<List<Map<String, dynamic>>?> _futureCategorias;
 
   final CitasServicio citasServicio = CitasServicio();
-  late Future<Map<String, dynamic>> futureCitas;
+  late Future<Map<String, dynamic>> futureCitas = Future.value({});
+
 
   @override
   void initState() {
@@ -129,13 +130,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   // Método para cargar citas actualizadas
-  void _cargarCitasActualizadas() {
+  void _cargarCitasActualizadas() async {
+    print("🚀 Cargando citas actualizadas...");
+
+    final data = await citasServicio.obtenerCitas(); // Espera el resultado
+    print("✅ Citas actualizadas cargadas: $data");
+
     setState(() {
-      futureCitas = citasServicio.obtenerCitas();
-      print("Citas actualizadas cargadas"+futureCitas.toString());
+      futureCitas = Future.value(data); // almacena los datos si es necesario
     });
-    print("Citas actualizadas cargadas" + futureCitas.toString());
   }
+
 
   // Método para verificar si es cumpleaños
   Future<void> _verificarCumpleanos() async {
@@ -1276,7 +1281,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                         final result = snapshot.data!;
                         if (result['exito'] != true) {
-                          return Center(child: Text(result['mensaje']));
+                          return Center(child: Text(result['mensaje']?.toString() ?? 'Ocurrió un error al cargar las citas'));
                         }
                         print(result);
                         final List citas = result['citas'];
@@ -1388,28 +1393,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                       mainAxisSize: MainAxisSize.min,
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        Text("📌 Estado: $estado", style: TextStyle(fontSize: 16, color: textColor)),
-                                                        const SizedBox(height: 10),
-                                                        Text("🏥 Categoría: $categoriaNombre", style: TextStyle(fontSize: 16, color: textColor)),
-                                                        const SizedBox(height: 10),
-                                                        Text("📅 Fecha: $fecha", style: TextStyle(fontSize: 16, color: textColor)),
-                                                        const SizedBox(height: 10),
-                                                        Text("⏰ Hora: $hora", style: TextStyle(fontSize: 16, color: textColor)),
-                                                        const SizedBox(height: 10),
-                                                        if (cita['sede'] != null) ...[
-                                                          Text("📍 Sede: ${cita['sede']}", style: TextStyle(fontSize: 16, color: textColor)),
-                                                          const SizedBox(height: 10),
-                                                        ],
-                                                        if (cita['nota'] != null) ...[
-                                                          Text("📝 Nota: ${cita['nota']}", style: TextStyle(fontSize: 16, color: textColor)),
-                                                          const SizedBox(height: 10),
-                                                        ],
-                                                        if (cita['asunto'] != null) ...[
-                                                          Text("📂 Asunto: ${cita['asunto']}", style: TextStyle(fontSize: 16, color: textColor)),
-                                                          const SizedBox(height: 10),
-                                                        ],
-                                                        
-                                                      ],
+  Text("📌 Estado: ${estado ?? 'Sin estado'}",
+      style: TextStyle(fontSize: 16, color: textColor)),
+  const SizedBox(height: 10),
+  Text("🏥 Categoría: ${categoriaNombre ?? 'Sin categoría'}",
+      style: TextStyle(fontSize: 16, color: textColor)),
+  const SizedBox(height: 10),
+  Text("📅 Fecha: ${fecha ?? 'No especificada'}",
+      style: TextStyle(fontSize: 16, color: textColor)),
+  const SizedBox(height: 10),
+  Text("⏰ Hora: ${hora ?? 'No indicada'}",
+      style: TextStyle(fontSize: 16, color: textColor)),
+  const SizedBox(height: 10),
+
+  if (cita['sede'] != null && cita['sede'] != '')
+    ...[
+      Text("📍 Sede: ${cita['sede']}",
+          style: TextStyle(fontSize: 16, color: textColor)),
+      const SizedBox(height: 10),
+    ],
+  if (cita['nota'] != null && cita['nota'] != '')
+    ...[
+      Text("📝 Nota: ${cita['nota']}",
+          style: TextStyle(fontSize: 16, color: textColor)),
+      const SizedBox(height: 10),
+    ],
+  if (cita['asunto'] != null && cita['asunto'] != '')
+    ...[
+      Text("📂 Asunto: ${cita['asunto']}",
+          style: TextStyle(fontSize: 16, color: textColor)),
+      const SizedBox(height: 10),
+    ],
+],
+
                                                     ),
                                                    actions: [
                                                           Center(
@@ -1568,11 +1584,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         return const Center(child: Text("No hay categorías disponibles"));
                       }
 
-                      // Tomamos todas las categorías disponibles (máximo 6)
-                      final categorias = snapshot.data!.take(6).toList();
-                      
-                      // Si hay categorías, usamos la primera para el botón general
-                      final primeraCategoria = categorias.isNotEmpty ? categorias[0] : null;
+                     final todasCategorias = snapshot.data!.take(7).toList();
+
+                      // Asignamos la primera categoría para el botón general
+                      final primeraCategoria = todasCategorias.isNotEmpty ? todasCategorias.first : null;
+
+                      // Excluimos la primera categoría del grid
+                      final categorias = todasCategorias.skip(1).toList();
 
                       return Column(
                         children: [
