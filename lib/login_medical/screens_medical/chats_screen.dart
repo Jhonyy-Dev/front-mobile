@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _initializeChat() {
     final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
     _model = GenerativeModel(
-      model: 'gemini-robotics-er-1.5-preview',
+      model: 'gemini-1.5-flash',
       apiKey: apiKey,
       generationConfig: GenerationConfig(
         temperature: 0.2,  // Temperatura baja para respuestas más rápidas y directas
