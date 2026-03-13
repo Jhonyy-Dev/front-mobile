@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Future<List<Map<String, dynamic>>?> _futureCategorias;
 
   final CitasServicio citasServicio = CitasServicio();
-  late Future<Map<String, dynamic>> futureCitas = Future.value({});
+  late Future<Map<String, dynamic>> futureCitas = Future.value({'exito': true, 'citas': []});
 
 
   @override

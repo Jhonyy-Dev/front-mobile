@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mi_app_flutter/login_medical/screens_medical/home.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_flutter/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:io';
 
 class ChatScreen extends StatefulWidget {
@@ -19,8 +20,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
-  late GenerativeModel _model;
-  late ChatSession _chat;
+  List<Map<String, String>> _conversationHistory = [];
+  int _currentKeyIndex = 0;
   bool _isTyping = false;
   final String _botAvatarUrl = 'assets/doc.png';
   String _userAvatarUrl = 'assets/doctor.webp';
@@ -60,22 +61,63 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _initializeChat() {
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: apiKey,
-      generationConfig: GenerationConfig(
-        temperature: 0.2,  // Temperatura baja para respuestas más rápidas y directas
-        maxOutputTokens: 2048,  // Tokens reducidos para respuestas más rápidas
-        topK: 64,
-        topP: 0.95,
-      ),
-    );
-    _chat = _model.startChat(
-      history: [
-        Content.text("I am Maval, a health expert. I provide brief and clear advice on health topics only. I use emojis to make responses engaging. My answers are concise and practical. I strictly limit my responses to health topics. I must respond in the same language as the user. I always provide helpful responses.")
-      ]
-    );
+    _conversationHistory = [
+      {
+        'role': 'system',
+        'content': 'I am Maval, a health expert. I give SHORT and direct answers on health topics only. Max 3-4 sentences per response. Use 1-2 emojis max. No long lists. Respond in the same language as the user.',
+      }
+    ];
+  }
+
+  List<String> _getGroqKeys() {
+    return [
+      dotenv.env['GROQ_API_KEY'] ?? '',
+      dotenv.env['GROQ_API_KEY_2'] ?? '',
+      dotenv.env['GROQ_API_KEY_3'] ?? '',
+      dotenv.env['GROQ_API_KEY_4'] ?? '',
+      dotenv.env['GROQ_API_KEY_5'] ?? '',
+    ].where((k) => k.isNotEmpty).toList();
+  }
+
+  Future<String> _sendGroqMessage(List<Map<String, String>> messages) async {
+    final keys = _getGroqKeys();
+    if (keys.isEmpty) throw Exception('No hay API keys de Groq configuradas');
+
+    for (int i = 0; i < keys.length; i++) {
+      final keyIndex = (_currentKeyIndex + i) % keys.length;
+      final key = keys[keyIndex];
+
+      try {
+        final response = await http.post(
+          Uri.parse('https://api.groq.com/openai/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $key',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': 'llama-3.3-70b-versatile',
+            'messages': messages,
+            'temperature': 0.2,
+            'max_tokens': 600,
+          }),
+        ).timeout(const Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          _currentKeyIndex = keyIndex;
+          final data = jsonDecode(utf8.decode(response.bodyBytes));
+          return data['choices'][0]['message']['content'] as String;
+        } else if (response.statusCode == 429) {
+          print('🔄 Key Groq ${keyIndex + 1} agotada, probando siguiente...');
+          continue;
+        } else {
+          throw Exception('Groq error ${response.statusCode}: ${response.body}');
+        }
+      } catch (e) {
+        if (i == keys.length - 1) rethrow;
+        print('⚠️ Error con key Groq ${keyIndex + 1}: $e');
+      }
+    }
+    throw Exception('Todas las keys de Groq están agotadas');
   }
 
   Future<void> _sendMessage() async {
@@ -93,82 +135,28 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.clear();
     _scrollToBottom();
 
+    _conversationHistory.add({'role': 'user', 'content': userMessage});
+
     try {
-      final content = Content.text(userMessage);
-      
-      // Intentar streaming primero
-      try {
-        final stream = _chat.sendMessageStream(content);
-        String fullResponse = '';
-        int botMessageIndex = -1;
-        bool firstChunk = true;
-        bool hasResponse = false;
-        
-        await stream.timeout(Duration(seconds: 10)).forEach((chunk) async {
-          if (chunk.text != null && chunk.text!.isNotEmpty) {
-            hasResponse = true;
-            
-            if (firstChunk) {
-              botMessageIndex = _messages.length;
-              setState(() {
-                _isTyping = false;
-                _messages.add(ChatMessage(
-                  text: '',
-                  isUser: false,
-                  timestamp: DateTime.now(),
-                ));
-              });
-              firstChunk = false;
-            }
-            
-            fullResponse += chunk.text!;
-            setState(() {
-              _messages[botMessageIndex] = ChatMessage(
-                text: fullResponse,
-                isUser: false,
-                timestamp: _messages[botMessageIndex].timestamp,
-              );
-            });
-            _scrollToBottom();
-            await Future.delayed(Duration(milliseconds: 15));
-          }
-        });
-        
-        // Si streaming no funcionó, usar método normal
-        if (!hasResponse) {
-          throw Exception('No streaming response');
-        }
-        
-      } catch (streamError) {
-        print('Streaming falló, usando método normal: $streamError');
-        
-        // Método de respaldo: usar sendMessage normal
-        final response = await _chat.sendMessage(content).timeout(Duration(seconds: 10));
-        
-        setState(() {
-          _isTyping = false;
-          if (response.text != null && response.text!.isNotEmpty) {
-            _messages.add(ChatMessage(
-              text: response.text!,
-              isUser: false,
-              timestamp: DateTime.now(),
-            ));
-          } else {
-            _messages.add(ChatMessage(
-              text: 'Hola! Soy Maval, tu asistente de salud. ¿En qué puedo ayudarte hoy?',
-              isUser: false,
-              timestamp: DateTime.now(),
-            ));
-          }
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      print('❌ Error en chat: $e');
+      final responseText = await _sendGroqMessage(_conversationHistory);
+      _conversationHistory.add({'role': 'assistant', 'content': responseText});
+
       setState(() {
         _isTyping = false;
         _messages.add(ChatMessage(
-          text: 'Sorry, there was an error processing your message. Please try again. Error: $e',
+          text: responseText,
+          isUser: false,
+          timestamp: DateTime.now(),
+        ));
+      });
+      _scrollToBottom();
+    } catch (e) {
+      print('❌ Error en chat Groq: $e');
+      _conversationHistory.removeLast();
+      setState(() {
+        _isTyping = false;
+        _messages.add(ChatMessage(
+          text: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta nuevamente.',
           isUser: false,
           timestamp: DateTime.now(),
         ));

@@ -15,7 +15,7 @@ class CitasServicio {
 
   }) async {
     try {
-      final datosUsuario = await obtenerDatosUsuario();
+      final datosUsuario = await obtenerDatosUsuarioMedical();
 
       if (datosUsuario == null) {
         return {'exito': false, 'mensaje': 'Error: No se encontró el usuario o el token.'};
@@ -59,7 +59,7 @@ class CitasServicio {
 
 Future<Map<String, dynamic>> obtenerCitas() async {
   try {
-    final datosUsuario = await obtenerDatosUsuario();
+    final datosUsuario = await obtenerDatosUsuarioMedical();
     if (datosUsuario == null) {
       return {'exito': false, 'mensaje': 'No se encontró el usuario o el token.'};
     }
@@ -97,14 +97,14 @@ Future<Map<String, dynamic>> obtenerCitas() async {
 
     Future<String?> eliminarCita(int citaId) async {
     try {
-      final datosUsuario = await obtenerDatosUsuario();
+      final datosUsuario = await obtenerDatosUsuarioMedical();
 
       final token = datosUsuario?['token'];
       
 
       final response = await http.delete(
         
-        Uri.parse("$baseUrl/citas/$citaId/"),
+        Uri.parse("$baseUrl/citas/$citaId"),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

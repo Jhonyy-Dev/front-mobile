@@ -245,51 +245,54 @@ class _OpenStreetMapPageState extends State<OpenStreetMapPage> {
       Position? lastPosition = await Geolocator.getLastKnownPosition();
 
       if (lastPosition != null && mounted && !_isCancelled) {
-        // Usar la última posición conocida para mostrar el mapa rápidamente
         setState(() {
           userLocation = LatLng(lastPosition.latitude, lastPosition.longitude);
           isLoading = false;
         });
 
-        // Iniciar la búsqueda de hospitales y urgent cares con esta ubicación inicial
+        // Ejecutar las 3 búsquedas EN PARALELO en lugar de secuencialmente
         if (mounted && !_isCancelled) {
-          await getCityName(lastPosition.latitude, lastPosition.longitude);
-          await buscarHospitalesCercanos();
-          await buscarUrgentCaresCercanos();
+          await Future.wait([
+            getCityName(lastPosition.latitude, lastPosition.longitude),
+            buscarHospitalesCercanos(),
+            buscarUrgentCaresCercanos(),
+          ]);
         }
       }
 
-      // Si el widget ya no está montado, detener la ejecución
       if (!mounted || _isCancelled) return;
 
-      // En paralelo, obtener la posición actual más precisa CON MANEJO DE ERRORES
+      // Obtener posición precisa con timeout reducido
       try {
         Position currentPosition = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high, // PRECISIÓN ALTA PARA UBICACIÓN EXACTA
-            timeLimit: Duration(seconds: 15) // Timeout aumentado para dar tiempo al GPS
-            );
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 8));
 
-        // Verificar nuevamente si el widget está montado
         if (!mounted || _isCancelled) return;
 
-        // Actualizar con la posición más precisa
+        // Solo repetir búsqueda si la posición cambió más de 0.1 millas (~160m)
+        final distanciaCambio = lastPosition != null
+            ? _calcularDistancia(
+                lastPosition.latitude, lastPosition.longitude,
+                currentPosition.latitude, currentPosition.longitude)
+            : 999.0;
+
         setState(() {
-          userLocation =
-              LatLng(currentPosition.latitude, currentPosition.longitude);
+          userLocation = LatLng(currentPosition.latitude, currentPosition.longitude);
         });
-        
-        print('✅ Ubicación precisa obtenida: ${currentPosition.latitude}, ${currentPosition.longitude}');
-        
-        // Actualizar ciudad, hospitales y urgent cares con la ubicación precisa
-        if (mounted && !_isCancelled) {
-          await getCityName(currentPosition.latitude, currentPosition.longitude);
-          await buscarHospitalesCercanos();
-          await buscarUrgentCaresCercanos();
+
+        print('✅ Ubicación precisa obtenida (cambio: ${distanciaCambio.toStringAsFixed(2)}mi)');
+
+        // Solo re-buscar si la posición cambió significativamente
+        if (distanciaCambio > 0.1 && mounted && !_isCancelled) {
+          await Future.wait([
+            getCityName(currentPosition.latitude, currentPosition.longitude),
+            buscarHospitalesCercanos(),
+            buscarUrgentCaresCercanos(),
+          ]);
         }
       } catch (e) {
-        print('⚠️ Error obteniendo ubicación precisa: $e');
-        print('📍 Usando ubicación aproximada existente');
-        // No hacer nada - usar la ubicación aproximada que ya tenemos
+        print('⚠️ Usando ubicación aproximada: $e');
       }
 
       // Si el mapa ya está inicializado, moverlo a la nueva posición
