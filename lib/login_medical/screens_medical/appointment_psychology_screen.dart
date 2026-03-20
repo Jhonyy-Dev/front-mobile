@@ -361,6 +361,7 @@ class _AppointmentPsychologyScreenState extends State<AppointmentPsychologyScree
                 ),
               ),
             ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
           ],
         ),
       ),

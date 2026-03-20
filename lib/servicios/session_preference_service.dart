@@ -85,22 +85,19 @@ class SessionPreferenceService {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      final usuarioData = prefs.getString('usuario');
-      final token = prefs.getString('token');
       final usuarioMedicalData = prefs.getString('usuario_medical');
       final tokenMedical = prefs.getString('token_medical');
+      final token = prefs.getString('token');
       
-      final hasMigration = usuarioData != null && token != null && 
-                          usuarioData.isNotEmpty && token.isNotEmpty;
-      final hasMedical = usuarioMedicalData != null && tokenMedical != null && 
-                        usuarioMedicalData.isNotEmpty && tokenMedical.isNotEmpty;
+      final hasMedical = (usuarioMedicalData != null && tokenMedical != null && 
+                        usuarioMedicalData.isNotEmpty && tokenMedical.isNotEmpty) ||
+                        (token != null && token.isNotEmpty);
       
       print('🔍 SESIONES ACTIVAS:');
-      print('   Migration: $hasMigration');
       print('   Medical: $hasMedical');
       
       return {
-        'migration': hasMigration,
+        'migration': false,
         'medical': hasMedical,
       };
     } catch (e) {

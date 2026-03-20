@@ -1224,7 +1224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
 
                 _buildProfileItem(
-                  title: 'Tarjeta Digital',
+                  title: 'Identificaciones',
                   icon: Icons.credit_card_outlined,
                   onTap: () {
                     Navigator.push(

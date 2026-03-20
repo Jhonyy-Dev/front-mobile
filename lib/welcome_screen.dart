@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'login_medical/login_screen.dart' as medical;
-import 'login_migration/login_screen.dart' as migration;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/video_background.dart';
@@ -12,6 +11,13 @@ class WelcomeScreen extends StatelessWidget {
   
   const WelcomeScreen({super.key});
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Good Morning!';
+    if (hour >= 12 && hour < 18) return 'Good Afternoon!';
+    return 'Good Evening!';
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
@@ -20,72 +26,126 @@ class WelcomeScreen extends StatelessWidget {
       body: VideoBackground(
         child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
+                  const Spacer(flex: 2),
+                  // Saludo dinámico
                   Text(
-                    'Health & Legal Care',
-                    style: textTheme.displaySmall?.copyWith(
+                    _getGreeting(),
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineLarge?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 34,
                       shadows: [
                         Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                          blurRadius: 10,
                           color: Colors.black.withOpacity(0.6),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      style: textTheme.titleSmall?.copyWith(
-                        color: Colors.white70,
-                        fontSize: 14,
+                  Text(
+                    'Sign in to continue.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          offset: const Offset(0, 1),
+                          blurRadius: 6,
+                          color: Colors.black.withOpacity(0.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Botón Log In - estilo oscuro
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const medical.LoginScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A1A2E),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 4,
+                    ),
+                    child: Text(
+                      'Log In',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        fontSize: 17,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  // Forgot User Name or Password?
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const medical.LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Forgot User Name or Password?',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF90CAF9),
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: const Color(0xFF90CAF9),
                         shadows: [
                           Shadow(
-                            offset: Offset(0, 1),
+                            offset: const Offset(0, 1),
                             blurRadius: 4,
                             color: Colors.black.withOpacity(0.5),
                           ),
                         ],
                       ),
-                      children: const [
-                        TextSpan(text: '#1 In '),
-                        TextSpan(
-                          text: 'United',
-                          style: TextStyle(color: Color.fromARGB(255, 108, 208, 255)),
-                        ),
-                        TextSpan(text: ' States'),
-                      ],
                     ),
                   ),
-                  Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Which section would you\nlike to go to?',
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              height: 1.4,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(0, 2),
-                                  blurRadius: 8,
-                                  color: Colors.black.withOpacity(0.7),
-                                ),
-                              ],
-                            ),
+                  const SizedBox(height: 24),
+                  // Don't have an account? Register Now
+                  Text.rich(
+                    TextSpan(
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                        shadows: [
+                          Shadow(
+                            offset: const Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black.withOpacity(0.5),
                           ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () {
+                        ],
+                      ),
+                      children: [
+                        const TextSpan(text: "Don't have an account? "),
+                        TextSpan(
+                          text: 'Register Now',
+                          style: const TextStyle(
+                            color: Color(0xFF90CAF9),
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFF90CAF9),
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -93,77 +153,53 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              minimumSize: const Size(double.infinity, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/icons/salud.png',
-                                  width: 24,
-                                  height: 24,
-                                  color: Colors.black,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Medical appointments',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const migration.LoginScreen(),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4485FD),
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/icons/law.png',
-                                  width: 24,
-                                  height: 24,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Migration Appointments',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Helpful Information
+                  GestureDetector(
+                    onTap: () {
+                      _showTermsOfServiceModal(context);
+                    },
+                    child: Text(
+                      'Helpful Information',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF90CAF9),
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: const Color(0xFF90CAF9),
+                        shadows: [
+                          Shadow(
+                            offset: const Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black.withOpacity(0.5),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const Spacer(flex: 3),
+                  // Copyright footer
+                  Text(
+                    '©2026 TrustCountry, Inc.\nAll rights reserved.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      height: 1.4,
+                      shadows: [
+                        Shadow(
+                          offset: const Offset(0, 1),
+                          blurRadius: 4,
+                          color: Colors.black.withOpacity(0.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Terms & Privacy
                   Text.rich(
                     textAlign: TextAlign.center,
                     TextSpan(
@@ -171,7 +207,7 @@ class WelcomeScreen extends StatelessWidget {
                         color: Colors.white70,
                         shadows: [
                           Shadow(
-                            offset: Offset(0, 1),
+                            offset: const Offset(0, 1),
                             blurRadius: 4,
                             color: Colors.black.withOpacity(0.5),
                           ),

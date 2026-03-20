@@ -34,7 +34,7 @@ class _TarjetaDigitalScreenState extends State<TarjetaDigitalScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Tarjeta Digital',
+          'Identificaciones',
           style: TextStyle(
             color: textColor,
             fontSize: 20,
@@ -160,7 +160,7 @@ class _TarjetaDigitalScreenState extends State<TarjetaDigitalScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'Aún no tienes tarjeta digital',
+              'Aún no tienes identificación',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
@@ -169,7 +169,7 @@ class _TarjetaDigitalScreenState extends State<TarjetaDigitalScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Tu tarjeta digital se mostrará aquí una vez activada por el administrador.',
+              'Tu identificación se mostrará aquí una vez activada por el administrador.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: subtitleColor),
             ),
